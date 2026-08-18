@@ -27,3 +27,13 @@ export const taxonomyRenameSchema = z.object({
 export const shareTokenCreateSchema = z.object({
   label: z.string().trim().optional(),
 });
+
+export const changePasswordSchema = z
+  .object({
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });

@@ -4,9 +4,9 @@ import { LoginForm } from "./login-form";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; passwordChanged?: string }>;
 }) {
-  const { callbackUrl } = await searchParams;
+  const { callbackUrl, passwordChanged } = await searchParams;
 
   return (
     <div className="flex flex-1 items-center justify-center p-6">
@@ -15,7 +15,12 @@ export default async function LoginPage({
           <CardTitle>Dashboard-CSM</CardTitle>
           <CardDescription>Sign in with your email and password.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {passwordChanged && (
+            <p className="text-sm text-green-600">
+              Password updated — sign in with your new password.
+            </p>
+          )}
           <LoginForm callbackUrl={callbackUrl ?? "/dashboard"} />
         </CardContent>
       </Card>

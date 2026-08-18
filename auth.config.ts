@@ -15,6 +15,10 @@ export const authConfig = {
 
       if (!isLoggedIn) return false;
 
+      if (auth.user.mustChangePassword && pathname !== "/change-password") {
+        return NextResponse.redirect(new URL("/change-password", request.url));
+      }
+
       if (isAdminRoute && auth.user.role !== "ADMIN") {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
