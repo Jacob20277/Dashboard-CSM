@@ -12,10 +12,11 @@ import { createActivityLog } from "./actions";
 
 export default async function LogPage() {
   const user = await requireUser();
+  const isAdmin = user.role === "ADMIN";
   const [accounts, kras, logs] = await Promise.all([
     getActiveAccounts(),
     getAllKrasWithKpis(),
-    getScopedActivityLogs({ type: "me", userId: user.id }),
+    getScopedActivityLogs(isAdmin ? { type: "team" } : { type: "me", userId: user.id }),
   ]);
 
   return (
@@ -35,8 +36,10 @@ export default async function LogPage() {
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Your recent entries</h2>
-        <ActivityLogTable logs={logs} currentUserId={user.id} isAdmin={user.role === "ADMIN"} />
+        <h2 className="text-lg font-semibold">
+          {isAdmin ? "All team entries" : "Your recent entries"}
+        </h2>
+        <ActivityLogTable logs={logs} currentUserId={user.id} isAdmin={isAdmin} showUser={isAdmin} />
       </div>
     </div>
   );
