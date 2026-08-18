@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { suggestKpiIds } from "@/lib/kpi-suggest";
 import type { LogFormState } from "./actions";
 
 type Kra = { id: string; name: string; kpis: { id: string; name: string }[] };
@@ -36,10 +37,15 @@ export function ActivityLogForm({
   logId?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [title, setTitle] = useState(defaultValues?.title ?? "");
+  const [notes, setNotes] = useState(defaultValues?.notes ?? "");
   const [selectedKpiIds, setSelectedKpiIds] = useState<Set<string>>(
     new Set(defaultValues?.kpiIds ?? [])
   );
   const [noKpiFit, setNoKpiFit] = useState(defaultValues?.noKpiFit ?? false);
+  const [autoTagged, setAutoTagged] = useState(false);
+
+  const flatKpis = useMemo(() => kras.flatMap((k) => k.kpis), [kras]);
 
   function toggleKpi(kpiId: string, checked: boolean) {
     setSelectedKpiIds((prev) => {
@@ -59,13 +65,29 @@ export function ActivityLogForm({
     if (checked) setSelectedKpiIds(new Set());
   }
 
+  function runAutoSuggest(nextTitle: string, nextNotes: string) {
+    const matches = suggestKpiIds(nextTitle, nextNotes, flatKpis);
+    if (matches.length > 0) {
+      setSelectedKpiIds((prev) => new Set([...prev, ...matches]));
+      setNoKpiFit(false);
+      setAutoTagged(true);
+    }
+  }
+
   return (
     <form action={formAction} className="space-y-5">
       {logId && <input type="hidden" name="id" value={logId} />}
 
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
-        <Input id="title" name="title" defaultValue={defaultValues?.title} required />
+        <Input
+          id="title"
+          name="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={() => runAutoSuggest(title, notes)}
+          required
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -116,15 +138,26 @@ export function ActivityLogForm({
 
       <div className="space-y-2">
         <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" name="notes" defaultValue={defaultValues?.notes} rows={3} required />
+        <Textarea
+          id="notes"
+          name="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={() => runAutoSuggest(title, notes)}
+          rows={3}
+          required
+        />
       </div>
 
       <div className="space-y-3">
         <Label>KPI tags</Label>
         <p className="text-muted-foreground text-sm">
-          Tag this activity against one or more KPIs, or mark it as not fitting any KPI. Nothing
-          is tagged automatically — pick manually.
+          KPIs are auto-suggested from your Title/Notes as you fill them in — review and
+          check/uncheck as needed, or mark it as not fitting any KPI.
         </p>
+        {autoTagged && (
+          <p className="text-sm text-green-600">Suggested automatically — adjust if needed.</p>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           {kras.map((kra) => (
             <div key={kra.id} className="space-y-2 rounded-md border p-3">
