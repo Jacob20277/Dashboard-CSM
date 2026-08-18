@@ -5,6 +5,7 @@ import { getActiveAccounts, getLoggableKras, getScopedActivityLogs } from "@/lib
 import { todayInOrgTimezone } from "@/lib/timezone";
 import { ActivityLogForm } from "./activity-log-form";
 import { createActivityLog } from "./actions";
+import { QuickAddAccountForm } from "./quick-add-account-form";
 
 export default async function LogPage() {
   const user = await requireUser();
@@ -23,7 +24,8 @@ export default async function LogPage() {
         <CardHeader>
           <CardTitle>Log Activity</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {!isAdmin && <QuickAddAccountForm />}
           <ActivityLogForm
             accounts={accounts}
             kras={kras}
