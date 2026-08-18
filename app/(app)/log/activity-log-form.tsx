@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { AccountCombobox } from "@/components/account-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -93,22 +94,7 @@ export function ActivityLogForm({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="accountId">Account</Label>
-          <select
-            id="accountId"
-            name="accountId"
-            defaultValue={defaultValues?.accountId ?? ""}
-            required
-            className="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none"
-          >
-            <option value="" disabled>
-              Select account
-            </option>
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
+          <AccountCombobox accounts={accounts} defaultAccountId={defaultValues?.accountId} />
         </div>
 
         <div className="space-y-2">
