@@ -36,23 +36,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    ...authConfig.callbacks,
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string;
-        token.role = (user as { role: "ADMIN" | "MEMBER" }).role;
-        token.mustChangePassword = (user as { mustChangePassword: boolean }).mustChangePassword;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as "ADMIN" | "MEMBER";
-        session.user.mustChangePassword = token.mustChangePassword as boolean;
-      }
-      return session;
-    },
-  },
 });
