@@ -17,10 +17,6 @@ export function CreateAccountForm() {
         <Label htmlFor="name">Account name</Label>
         <Input id="name" name="name" required />
       </div>
-      <label className="flex items-center gap-2 pb-2 text-sm">
-        <input type="checkbox" name="isStrategic" className="h-4 w-4 rounded border-input" />
-        Strategic account
-      </label>
       <Button type="submit" disabled={pending}>
         {pending ? "Adding..." : "Add account"}
       </Button>

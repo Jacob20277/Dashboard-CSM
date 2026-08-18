@@ -20,10 +20,10 @@ export default async function SharePage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ scope?: string; userId?: string }>;
+  searchParams: Promise<{ scope?: string }>;
 }) {
   const { token } = await params;
-  const { scope: scopeParam, userId: userIdParam } = await searchParams;
+  const { scope: scopeParam } = await searchParams;
 
   const shareToken = await prisma.shareToken.findUnique({ where: { token } });
 
@@ -45,12 +45,13 @@ export default async function SharePage({
   const members = await getActiveTeamMembers();
 
   let scope: DashboardScope;
-  if (scopeParam === "individual") {
-    const targetId =
-      userIdParam && members.some((m) => m.id === userIdParam) ? userIdParam : members[0]?.id;
-    scope = targetId ? { type: "individual", userId: targetId } : { type: "team" };
+  let selectedValue: string;
+  if (scopeParam && members.some((m) => m.id === scopeParam)) {
+    scope = { type: "individual", userId: scopeParam };
+    selectedValue = scopeParam;
   } else {
     scope = { type: "team" };
+    selectedValue = "team";
   }
 
   const logs = await getScopedActivityLogs(scope);
@@ -65,10 +66,8 @@ export default async function SharePage({
         <h1 className="text-xl font-semibold">Dashboard-CSM</h1>
         <DashboardScopeSelector
           basePath={`/share/${token}`}
-          scope={scope.type}
-          userId={scope.type === "individual" ? scope.userId : undefined}
+          value={selectedValue}
           members={members}
-          showMeOption={false}
         />
       </div>
 

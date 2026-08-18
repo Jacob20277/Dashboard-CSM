@@ -14,21 +14,23 @@ import {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ scope?: string; userId?: string }>;
+  searchParams: Promise<{ scope?: string }>;
 }) {
   const user = await requireUser();
-  const { scope: scopeParam, userId: userIdParam } = await searchParams;
+  const { scope: scopeParam } = await searchParams;
   const members = await getActiveTeamMembers();
 
   let scope: DashboardScope;
+  let selectedValue: string;
   if (scopeParam === "team") {
     scope = { type: "team" };
-  } else if (scopeParam === "individual") {
-    const targetId =
-      userIdParam && members.some((m) => m.id === userIdParam) ? userIdParam : user.id;
-    scope = { type: "individual", userId: targetId };
+    selectedValue = "team";
+  } else if (scopeParam && members.some((m) => m.id === scopeParam)) {
+    scope = { type: "individual", userId: scopeParam };
+    selectedValue = scopeParam;
   } else {
-    scope = { type: "me", userId: user.id };
+    scope = { type: "individual", userId: user.id };
+    selectedValue = user.id;
   }
 
   const logs = await getScopedActivityLogs(scope);
@@ -41,12 +43,7 @@ export default async function DashboardPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">Dashboard</h1>
-        <DashboardScopeSelector
-          basePath="/dashboard"
-          scope={scope.type}
-          userId={scope.type === "individual" ? scope.userId : undefined}
-          members={members}
-        />
+        <DashboardScopeSelector basePath="/dashboard" value={selectedValue} members={members} />
       </div>
 
       <DashboardSummary

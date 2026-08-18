@@ -13,6 +13,7 @@ import { deleteActivityLogAction } from "@/app/(app)/log/actions";
 
 export interface ActivityLogRow {
   id: string;
+  title: string;
   activityDate: Date;
   durationMinutes: number;
   notes: string | null;
@@ -52,6 +53,7 @@ export function ActivityLogTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>Title</TableHead>
           <TableHead>Date</TableHead>
           {showUser && <TableHead>Member</TableHead>}
           {showAccount && <TableHead>Account</TableHead>}
@@ -66,6 +68,7 @@ export function ActivityLogTable({
           const canEdit = isAdmin || log.userId === currentUserId;
           return (
             <TableRow key={log.id}>
+              <TableCell className="max-w-[12rem] truncate font-medium">{log.title}</TableCell>
               <TableCell className="whitespace-nowrap">{formatDate(log.activityDate)}</TableCell>
               {showUser && <TableCell>{log.user.name}</TableCell>}
               {showAccount && <TableCell>{log.account.name}</TableCell>}

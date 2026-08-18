@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-export type DashboardScope =
-  | { type: "me"; userId: string }
-  | { type: "team" }
-  | { type: "individual"; userId: string };
+export type DashboardScope = { type: "team" } | { type: "individual"; userId: string };
 
 export interface DateRange {
   from?: Date;
@@ -33,7 +30,7 @@ export async function getScopedActivityLogs(scope: DashboardScope, range: DateRa
     },
     include: {
       user: { select: { id: true, name: true } },
-      account: { select: { id: true, name: true, isStrategic: true } },
+      account: { select: { id: true, name: true } },
       kpiTags: { include: { kpi: { include: { kra: true } } } },
     },
     orderBy: { activityDate: "desc" },
@@ -48,7 +45,7 @@ export async function getAccountActivityLogs(accountId: string, range: DateRange
     },
     include: {
       user: { select: { id: true, name: true } },
-      account: { select: { id: true, name: true, isStrategic: true } },
+      account: { select: { id: true, name: true } },
       kpiTags: { include: { kpi: { include: { kra: true } } } },
     },
     orderBy: { activityDate: "desc" },
@@ -146,7 +143,6 @@ export function computeAccountTotals(logs: ScopedLog[]) {
     {
       accountId: string;
       accountName: string;
-      isStrategic: boolean;
       totalMinutes: number;
       entryCount: number;
       flaggedCount: number;
@@ -159,7 +155,6 @@ export function computeAccountTotals(logs: ScopedLog[]) {
       {
         accountId: log.accountId,
         accountName: log.account.name,
-        isStrategic: log.account.isStrategic,
         totalMinutes: 0,
         entryCount: 0,
         flaggedCount: 0,
@@ -180,11 +175,18 @@ export function getFlaggedLogs(logs: ScopedLog[]) {
   return logs.filter((l) => l.isUnmatched);
 }
 
+export const NON_LOGGABLE_KRA_NAME = "Zuper Culture";
+
 export async function getAllKrasWithKpis() {
   return prisma.kra.findMany({
     orderBy: { sortOrder: "asc" },
     include: { kpis: { orderBy: { sortOrder: "asc" } } },
   });
+}
+
+export async function getLoggableKras() {
+  const kras = await getAllKrasWithKpis();
+  return kras.filter((kra) => kra.name !== NON_LOGGABLE_KRA_NAME);
 }
 
 export async function getActiveAccounts() {

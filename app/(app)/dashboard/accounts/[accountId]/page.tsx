@@ -22,7 +22,6 @@ export default async function AccountDetailPage({
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <h1 className="text-xl font-semibold">{account.name}</h1>
-        {account.isStrategic && <Badge variant="secondary">Strategic</Badge>}
         {!account.isActive && <Badge variant="outline">Archived</Badge>}
       </div>
       <ActivityLogTable

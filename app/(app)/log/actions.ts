@@ -9,11 +9,13 @@ export type LogFormState = { error?: string; success?: boolean };
 
 function readActivityLogForm(formData: FormData) {
   return activityLogSchema.safeParse({
+    title: formData.get("title"),
     accountId: formData.get("accountId"),
     activityDate: formData.get("activityDate"),
     durationMinutes: formData.get("durationMinutes"),
-    notes: formData.get("notes") || undefined,
+    notes: formData.get("notes"),
     kpiIds: formData.getAll("kpiIds"),
+    noKpiFit: formData.get("noKpiFit") === "on",
   });
 }
 
@@ -27,12 +29,13 @@ export async function createActivityLog(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { accountId, activityDate, durationMinutes, notes, kpiIds } = parsed.data;
+  const { title, accountId, activityDate, durationMinutes, notes, kpiIds } = parsed.data;
 
   await prisma.$transaction(async (tx) => {
     const log = await tx.activityLog.create({
       data: {
         userId: user.id,
+        title,
         accountId,
         activityDate: new Date(activityDate),
         durationMinutes,
@@ -72,12 +75,13 @@ export async function updateActivityLog(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { accountId, activityDate, durationMinutes, notes, kpiIds } = parsed.data;
+  const { title, accountId, activityDate, durationMinutes, notes, kpiIds } = parsed.data;
 
   await prisma.$transaction(async (tx) => {
     await tx.activityLog.update({
       where: { id },
       data: {
+        title,
         accountId,
         activityDate: new Date(activityDate),
         durationMinutes,

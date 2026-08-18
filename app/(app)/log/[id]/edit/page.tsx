@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth-guards";
-import { getActiveAccounts, getAllKrasWithKpis } from "@/lib/dashboard-queries";
+import { getActiveAccounts, getLoggableKras } from "@/lib/dashboard-queries";
 import { prisma } from "@/lib/prisma";
 import { ActivityLogForm } from "../../activity-log-form";
 import { updateActivityLog } from "../../actions";
@@ -20,7 +20,7 @@ export default async function EditLogPage({ params }: { params: Promise<{ id: st
     redirect("/log");
   }
 
-  const [accounts, kras] = await Promise.all([getActiveAccounts(), getAllKrasWithKpis()]);
+  const [accounts, kras] = await Promise.all([getActiveAccounts(), getLoggableKras()]);
 
   return (
     <Card>
@@ -35,11 +35,13 @@ export default async function EditLogPage({ params }: { params: Promise<{ id: st
           submitLabel="Save changes"
           logId={log.id}
           defaultValues={{
+            title: log.title,
             accountId: log.accountId,
             activityDate: log.activityDate.toISOString().slice(0, 10),
             durationMinutes: log.durationMinutes,
             notes: log.notes ?? undefined,
             kpiIds: log.kpiTags.map((t) => t.kpiId),
+            noKpiFit: log.isUnmatched && log.kpiTags.length === 0,
           }}
         />
       </CardContent>

@@ -33,11 +33,12 @@ export interface KpiTotal {
 export interface AccountTotal {
   accountId: string;
   accountName: string;
-  isStrategic: boolean;
   totalMinutes: number;
   entryCount: number;
   flaggedCount: number;
 }
+
+const FIXED_KRA_NAME = "Zuper Culture";
 
 export function DashboardSummary({
   kraTotals,
@@ -98,12 +99,16 @@ export function DashboardSummary({
         <CardHeader>
           <CardTitle>Hours by KRA</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {chartData.length > 0 ? (
             <KraBarChart data={chartData} />
           ) : (
             <p className="text-muted-foreground text-sm">No matched activity yet.</p>
           )}
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <span className="text-sm font-medium">{FIXED_KRA_NAME}</span>
+            <Badge variant="secondary">Fully Met</Badge>
+          </div>
         </CardContent>
       </Card>
 
@@ -166,11 +171,6 @@ export function DashboardSummary({
                       </Link>
                     ) : (
                       a.accountName
-                    )}
-                    {a.isStrategic && (
-                      <Badge variant="secondary" className="ml-2">
-                        Strategic
-                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>{minutesToHours(a.totalMinutes)}h</TableCell>
