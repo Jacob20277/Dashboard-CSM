@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id                 String        @id @default(cuid())
+  name               String
+  email              String        @unique
+  passwordHash       String
+  role               Role          @default(MEMBER)
+  isActive           Boolean       @default(true)
+  mustChangePassword Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  activityLogs       ActivityLog[]
+  shareTokens        ShareToken[]
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  isStrategic  Boolean       @default(false)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  activityLogs ActivityLog[]
+}
+
+model Kra {
+  id        String @id @default(cuid())
+  name      String @unique
+  sortOrder Int
+  kpis      Kpi[]
+}
+
+model Kpi {
+  id           String           @id @default(cuid())
+  kraId        String
+  kra          Kra              @relation(fields: [kraId], references: [id])
+  name         String
+  sortOrder    Int
+  activityTags ActivityLogKpi[]
+
+  @@unique([kraId, name])
+}
+
+model ActivityLog {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id])
+  accountId       String
+  account         Account          @relation(fields: [accountId], references: [id])
+  activityDate    DateTime         @db.Date
+  durationMinutes Int
+  notes           String?
+  isUnmatched     Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  kpiTags         ActivityLogKpi[]
+
+  @@index([userId, activityDate])
+  @@index([accountId])
+  @@index([isUnmatched])
+}
+
+model ActivityLogKpi {
+  activityLogId String
+  activityLog   ActivityLog @relation(fields: [activityLogId], references: [id], onDelete: Cascade)
+  kpiId         String
+  kpi           Kpi         @relation(fields: [kpiId], references: [id])
+  createdAt     DateTime    @default(now())
+
+  @@id([activityLogId, kpiId])
+}
+
+model ShareToken {
+  id              String    @id @default(cuid())
+  token           String    @unique
+  label           String?
+  createdByUserId String
+  createdBy       User      @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime  @default(now())
+  revokedAt       DateTime?
+  lastAccessedAt  DateTime?
+}

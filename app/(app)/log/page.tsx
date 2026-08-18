@@ -1,0 +1,43 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ActivityLogTable } from "@/components/activity-log-table";
+import { requireUser } from "@/lib/auth-guards";
+import {
+  getActiveAccounts,
+  getAllKrasWithKpis,
+  getScopedActivityLogs,
+} from "@/lib/dashboard-queries";
+import { todayInOrgTimezone } from "@/lib/timezone";
+import { ActivityLogForm } from "./activity-log-form";
+import { createActivityLog } from "./actions";
+
+export default async function LogPage() {
+  const user = await requireUser();
+  const [accounts, kras, logs] = await Promise.all([
+    getActiveAccounts(),
+    getAllKrasWithKpis(),
+    getScopedActivityLogs({ type: "me", userId: user.id }),
+  ]);
+
+  return (
+    <div className="space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Log today&apos;s activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActivityLogForm
+            accounts={accounts}
+            kras={kras}
+            action={createActivityLog}
+            defaultValues={{ activityDate: todayInOrgTimezone() }}
+          />
+        </CardContent>
+      </Card>
+
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold">Your recent entries</h2>
+        <ActivityLogTable logs={logs} currentUserId={user.id} isAdmin={user.role === "ADMIN"} />
+      </div>
+    </div>
+  );
+}
