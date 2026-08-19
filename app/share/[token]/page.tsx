@@ -1,5 +1,6 @@
 import { DashboardScopeSelector } from "@/components/dashboard-scope-selector";
 import { DashboardSummary } from "@/components/dashboard-summary";
+import { CsatSummaryCard } from "@/components/csat-summary-card";
 import {
   computeAccountTotals,
   computeKpiTotals,
@@ -9,6 +10,7 @@ import {
   getScopedActivityLogs,
   type DashboardScope,
 } from "@/lib/dashboard-queries";
+import { computeCsatSummary, getCsatResponses } from "@/lib/csat-queries";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = {
@@ -54,11 +56,15 @@ export default async function SharePage({
     selectedValue = "team";
   }
 
-  const logs = await getScopedActivityLogs(scope);
+  const [logs, csatResponses] = await Promise.all([
+    getScopedActivityLogs(scope),
+    getCsatResponses(),
+  ]);
   const kraTotals = computeKraTotals(logs);
   const kpiTotals = computeKpiTotals(logs);
   const accountTotals = computeAccountTotals(logs);
   const flaggedCount = getFlaggedLogs(logs).length;
+  const csatSummary = computeCsatSummary(csatResponses);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
@@ -70,6 +76,11 @@ export default async function SharePage({
           members={members}
         />
       </div>
+
+      <CsatSummaryCard
+        averageScore={csatSummary.averageScore}
+        responseCount={csatSummary.responseCount}
+      />
 
       <DashboardSummary
         kraTotals={kraTotals}

@@ -18,6 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <nav className="flex flex-wrap items-center gap-4 text-sm font-medium">
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/log">Log Activity</Link>
+            <Link href="/csat-links">CSAT Links</Link>
             {isAdmin && (
               <>
                 <span className="text-muted-foreground">|</span>

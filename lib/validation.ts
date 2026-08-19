@@ -38,6 +38,16 @@ export const shareTokenCreateSchema = z.object({
   label: z.string().trim().optional(),
 });
 
+export const csatLinkCreateSchema = z.object({
+  accountId: z.string().min(1, "Select an account"),
+});
+
+export const csatResponseSchema = z.object({
+  score: z.coerce.number().int().min(1, "Select a rating").max(5, "Select a rating"),
+  comment: z.string().trim().max(1000, "Keep comments under 1000 characters").optional(),
+  respondentName: z.string().trim().max(200, "Keep name under 200 characters").optional(),
+});
+
 export const changePasswordSchema = z
   .object({
     newPassword: z.string().min(8, "Password must be at least 8 characters"),

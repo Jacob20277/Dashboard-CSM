@@ -27,15 +27,18 @@ model User {
   updatedAt          DateTime      @updatedAt
   activityLogs       ActivityLog[]
   shareTokens        ShareToken[]
+  csatLinks          CsatLink[]
 }
 
 model Account {
-  id           String        @id @default(cuid())
-  name         String        @unique
-  isActive     Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  activityLogs ActivityLog[]
+  id            String         @id @default(cuid())
+  name          String         @unique
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  activityLogs  ActivityLog[]
+  csatLinks     CsatLink[]
+  csatResponses CsatResponse[]
 }
 
 model Kra {
@@ -95,4 +98,33 @@ model ShareToken {
   createdAt       DateTime  @default(now())
   revokedAt       DateTime?
   lastAccessedAt  DateTime?
+}
+
+model CsatLink {
+  id              String         @id @default(cuid())
+  token           String         @unique
+  accountId       String
+  account         Account        @relation(fields: [accountId], references: [id])
+  createdByUserId String
+  createdBy       User           @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime       @default(now())
+  revokedAt       DateTime?
+  responses       CsatResponse[]
+
+  @@index([accountId])
+}
+
+model CsatResponse {
+  id             String   @id @default(cuid())
+  csatLinkId     String
+  csatLink       CsatLink @relation(fields: [csatLinkId], references: [id])
+  accountId      String
+  account        Account  @relation(fields: [accountId], references: [id])
+  score          Int
+  comment        String?
+  respondentName String?
+  submittedAt    DateTime @default(now())
+
+  @@index([accountId])
+  @@index([csatLinkId])
 }
