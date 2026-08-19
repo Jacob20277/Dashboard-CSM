@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { headers } from "next/headers";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,7 +28,12 @@ export default async function CsatLinksPage() {
     }),
     prisma.csatLink.findMany({
       orderBy: { createdAt: "desc" },
-      include: { account: true, createdBy: true, _count: { select: { responses: true } } },
+      include: {
+        account: true,
+        createdBy: true,
+        questions: { orderBy: { sortOrder: "asc" } },
+        _count: { select: { responses: true } },
+      },
     }),
     headers(),
   ]);
@@ -65,6 +71,7 @@ export default async function CsatLinksPage() {
               <TableRow>
                 <TableHead>Account</TableHead>
                 <TableHead>Link</TableHead>
+                <TableHead>Questions</TableHead>
                 <TableHead>Created by</TableHead>
                 <TableHead>Responses</TableHead>
                 <TableHead>Status</TableHead>
@@ -75,6 +82,7 @@ export default async function CsatLinksPage() {
               {links.map((link) => {
                 const url = `${baseUrl}/csat/${link.token}`;
                 const isRevoked = !!link.revokedAt;
+                const questionList = link.questions.map((q) => q.text).join("\n");
                 return (
                   <TableRow key={link.id}>
                     <TableCell>{link.account.name}</TableCell>
@@ -84,6 +92,11 @@ export default async function CsatLinksPage() {
                         <CopyButton text={url} />
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <span title={questionList} className="cursor-help underline decoration-dotted">
+                        {link.questions.length} question{link.questions.length === 1 ? "" : "s"}
+                      </span>
+                    </TableCell>
                     <TableCell>{link.createdBy.name}</TableCell>
                     <TableCell>{link._count.responses}</TableCell>
                     <TableCell>
@@ -92,21 +105,29 @@ export default async function CsatLinksPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {!isRevoked && (
-                        <form action={revokeCsatLink}>
-                          <input type="hidden" name="id" value={link.id} />
-                          <Button variant="outline" size="sm" type="submit">
-                            Revoke
-                          </Button>
-                        </form>
-                      )}
+                      <div className="flex justify-end gap-2">
+                        <Link
+                          href={`/csat-links/${link.id}`}
+                          className={buttonVariants({ variant: "outline", size: "sm" })}
+                        >
+                          View responses
+                        </Link>
+                        {!isRevoked && (
+                          <form action={revokeCsatLink}>
+                            <input type="hidden" name="id" value={link.id} />
+                            <Button variant="outline" size="sm" type="submit">
+                              Revoke
+                            </Button>
+                          </form>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
               })}
               {links.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-muted-foreground">
+                  <TableCell colSpan={7} className="text-muted-foreground">
                     No CSAT links yet.
                   </TableCell>
                 </TableRow>

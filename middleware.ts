@@ -10,5 +10,6 @@ export const config = {
     "/admin/:path*",
     "/change-password/:path*",
     "/csat-links/:path*",
+    "/csat-responses/:path*",
   ],
 };

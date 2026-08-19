@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteAccountAction, updateAccountAction, type AccountFormState } from "./actions";
 
@@ -34,6 +35,12 @@ export function AccountRowForm({
         <Button variant="outline" size="sm" type="submit">
           Save
         </Button>
+        <Link
+          href={`/dashboard/accounts/${account.id}`}
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          View
+        </Link>
         <Button
           variant="outline"
           size="sm"

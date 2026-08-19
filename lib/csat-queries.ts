@@ -30,7 +30,18 @@ export async function getAccountCsatResponses(accountId: string, range: DateRang
   });
 }
 
-type CsatResponseRow = Awaited<ReturnType<typeof getCsatResponses>>[number];
+export async function getLinkCsatResponses(csatLinkId: string, range: DateRange = {}) {
+  return prisma.csatResponse.findMany({
+    where: {
+      csatLinkId,
+      submittedAt: { gte: range.from, lte: range.to },
+    },
+    include: csatResponseInclude,
+    orderBy: { submittedAt: "desc" },
+  });
+}
+
+export type CsatResponseRow = Awaited<ReturnType<typeof getCsatResponses>>[number];
 
 function responseAverage(response: CsatResponseRow) {
   if (response.answers.length === 0) return null;

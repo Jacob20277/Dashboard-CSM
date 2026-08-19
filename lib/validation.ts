@@ -56,6 +56,20 @@ export const csatResponseSchema = z.object({
   respondentName: z.string().trim().max(200, "Keep name under 200 characters").optional(),
 });
 
+export const csatResponseEditSchema = z.object({
+  responseId: z.string().min(1),
+  respondentName: z.string().trim().max(200, "Keep name under 200 characters").optional(),
+  comment: z.string().trim().max(1000, "Keep comments under 1000 characters").optional(),
+  answers: z
+    .array(
+      z.object({
+        answerId: z.string().min(1),
+        score: z.coerce.number().int().min(1, "Select a rating").max(5, "Select a rating"),
+      })
+    )
+    .min(1),
+});
+
 export const csatTemplateCreateSchema = z.object({
   name: z.string().trim().min(1, "Template name is required"),
 });
