@@ -18,8 +18,13 @@ import { revokeCsatLink } from "./actions";
 import { CreateCsatLinkForm } from "./create-csat-link-form";
 
 export default async function CsatLinksPage() {
-  const [accounts, links, hdrs] = await Promise.all([
+  const [accounts, templates, links, hdrs] = await Promise.all([
     getActiveAccounts(),
+    prisma.csatTemplate.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      include: { questions: { orderBy: { sortOrder: "asc" } } },
+    }),
     prisma.csatLink.findMany({
       orderBy: { createdAt: "desc" },
       include: { account: true, createdBy: true, _count: { select: { responses: true } } },
@@ -46,7 +51,7 @@ export default async function CsatLinksPage() {
           <CardTitle>Generate a link</CardTitle>
         </CardHeader>
         <CardContent>
-          <CreateCsatLinkForm accounts={accounts} />
+          <CreateCsatLinkForm accounts={accounts} templates={templates} />
         </CardContent>
       </Card>
 

@@ -101,30 +101,72 @@ model ShareToken {
 }
 
 model CsatLink {
-  id              String         @id @default(cuid())
-  token           String         @unique
+  id              String             @id @default(cuid())
+  token           String             @unique
   accountId       String
-  account         Account        @relation(fields: [accountId], references: [id])
+  account         Account            @relation(fields: [accountId], references: [id])
   createdByUserId String
-  createdBy       User           @relation(fields: [createdByUserId], references: [id])
-  createdAt       DateTime       @default(now())
+  createdBy       User               @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime           @default(now())
   revokedAt       DateTime?
+  questions       CsatLinkQuestion[]
   responses       CsatResponse[]
 
   @@index([accountId])
 }
 
+model CsatLinkQuestion {
+  id         String       @id @default(cuid())
+  csatLinkId String
+  csatLink   CsatLink     @relation(fields: [csatLinkId], references: [id], onDelete: Cascade)
+  text       String
+  sortOrder  Int
+  answers    CsatAnswer[]
+
+  @@index([csatLinkId])
+}
+
 model CsatResponse {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   csatLinkId     String
-  csatLink       CsatLink @relation(fields: [csatLinkId], references: [id])
+  csatLink       CsatLink     @relation(fields: [csatLinkId], references: [id])
   accountId      String
-  account        Account  @relation(fields: [accountId], references: [id])
-  score          Int
+  account        Account      @relation(fields: [accountId], references: [id])
   comment        String?
   respondentName String?
-  submittedAt    DateTime @default(now())
+  submittedAt    DateTime     @default(now())
+  answers        CsatAnswer[]
 
   @@index([accountId])
   @@index([csatLinkId])
+}
+
+model CsatAnswer {
+  id                 String           @id @default(cuid())
+  csatResponseId     String
+  csatResponse       CsatResponse     @relation(fields: [csatResponseId], references: [id], onDelete: Cascade)
+  csatLinkQuestionId String
+  csatLinkQuestion   CsatLinkQuestion @relation(fields: [csatLinkQuestionId], references: [id])
+  score              Int
+
+  @@index([csatResponseId])
+  @@index([csatLinkQuestionId])
+}
+
+model CsatTemplate {
+  id        String                 @id @default(cuid())
+  name      String                 @unique
+  isActive  Boolean                @default(true)
+  sortOrder Int                    @default(0)
+  questions CsatTemplateQuestion[]
+}
+
+model CsatTemplateQuestion {
+  id         String       @id @default(cuid())
+  templateId String
+  template   CsatTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  text       String
+  sortOrder  Int
+
+  @@index([templateId])
 }

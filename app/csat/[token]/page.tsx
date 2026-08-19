@@ -16,7 +16,7 @@ export default async function CsatSurveyPage({
 
   const link = await prisma.csatLink.findUnique({
     where: { token },
-    include: { account: true },
+    include: { account: true, questions: { orderBy: { sortOrder: "asc" } } },
   });
 
   if (!link || link.revokedAt) {
@@ -38,7 +38,7 @@ export default async function CsatSurveyPage({
           <CardTitle>How are we doing, {link.account.name}?</CardTitle>
         </CardHeader>
         <CardContent>
-          <CsatResponseForm action={action} />
+          <CsatResponseForm action={action} questions={link.questions} />
         </CardContent>
       </Card>
     </div>

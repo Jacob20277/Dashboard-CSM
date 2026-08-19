@@ -40,12 +40,34 @@ export const shareTokenCreateSchema = z.object({
 
 export const csatLinkCreateSchema = z.object({
   accountId: z.string().min(1, "Select an account"),
+  questionTexts: z
+    .array(z.string().trim().min(1))
+    .min(1, "Add at least one question"),
+});
+
+export const csatAnswerSchema = z.object({
+  questionId: z.string().min(1),
+  score: z.coerce.number().int().min(1, "Select a rating").max(5, "Select a rating"),
 });
 
 export const csatResponseSchema = z.object({
-  score: z.coerce.number().int().min(1, "Select a rating").max(5, "Select a rating"),
+  answers: z.array(csatAnswerSchema).min(1, "Answer at least one question"),
   comment: z.string().trim().max(1000, "Keep comments under 1000 characters").optional(),
   respondentName: z.string().trim().max(200, "Keep name under 200 characters").optional(),
+});
+
+export const csatTemplateCreateSchema = z.object({
+  name: z.string().trim().min(1, "Template name is required"),
+});
+
+export const csatTemplateQuestionCreateSchema = z.object({
+  templateId: z.string().min(1),
+  text: z.string().trim().min(1, "Question text is required"),
+});
+
+export const csatTemplateQuestionRenameSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().trim().min(1, "Question text is required"),
 });
 
 export const changePasswordSchema = z

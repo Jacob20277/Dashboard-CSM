@@ -15,14 +15,24 @@ export async function createCsatLink(
   const user = await requireUser();
   const parsed = csatLinkCreateSchema.safeParse({
     accountId: formData.get("accountId"),
+    questionTexts: formData.getAll("questionText"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const token = randomBytes(32).toString("base64url");
-  await prisma.csatLink.create({
-    data: { token, accountId: parsed.data.accountId, createdByUserId: user.id },
+  await prisma.$transaction(async (tx) => {
+    const link = await tx.csatLink.create({
+      data: { token, accountId: parsed.data.accountId, createdByUserId: user.id },
+    });
+    await tx.csatLinkQuestion.createMany({
+      data: parsed.data.questionTexts.map((text, sortOrder) => ({
+        csatLinkId: link.id,
+        text,
+        sortOrder,
+      })),
+    });
   });
 
   revalidatePath("/csat-links");
