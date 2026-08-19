@@ -58,7 +58,7 @@ export default async function SharePage({
 
   const [logs, csatResponses] = await Promise.all([
     getScopedActivityLogs(scope),
-    getCsatResponses(),
+    getCsatResponses(scope),
   ]);
   const kraTotals = computeKraTotals(logs);
   const kpiTotals = computeKpiTotals(logs);

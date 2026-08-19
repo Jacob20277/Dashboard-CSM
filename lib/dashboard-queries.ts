@@ -7,7 +7,7 @@ export interface DateRange {
   to?: Date;
 }
 
-async function scopeToUserIds(scope: DashboardScope): Promise<string[] | undefined> {
+export async function scopeToUserIds(scope: DashboardScope): Promise<string[] | undefined> {
   if (scope.type === "team") {
     const users = await prisma.user.findMany({
       where: { isActive: true },

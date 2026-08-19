@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import type { DateRange } from "@/lib/dashboard-queries";
+import { scopeToUserIds, type DashboardScope, type DateRange } from "@/lib/dashboard-queries";
 
-export async function getCsatResponses(range: DateRange = {}) {
+export async function getCsatResponses(scope: DashboardScope, range: DateRange = {}) {
+  const userIds = await scopeToUserIds(scope);
   return prisma.csatResponse.findMany({
     where: {
       submittedAt: { gte: range.from, lte: range.to },
+      csatLink: userIds ? { createdByUserId: { in: userIds } } : undefined,
     },
     include: {
       account: { select: { id: true, name: true } },
