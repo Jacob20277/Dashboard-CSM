@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -15,6 +16,7 @@ import { requireUser } from "@/lib/auth-guards";
 import { getAccountActivityLogs } from "@/lib/dashboard-queries";
 import { computeCsatSummary, getAccountCsatResponses } from "@/lib/csat-queries";
 import { prisma } from "@/lib/prisma";
+import { deleteCsatResponseAction } from "./actions";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -40,6 +42,7 @@ export default async function AccountDetailPage({
     getAccountCsatResponses(accountId),
   ]);
   const csatSummary = computeCsatSummary(csatResponses);
+  const isAdmin = user.role === "ADMIN";
 
   return (
     <div className="space-y-6">
@@ -65,6 +68,7 @@ export default async function AccountDetailPage({
                 <TableHead>Score</TableHead>
                 <TableHead>From</TableHead>
                 <TableHead>Comment</TableHead>
+                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -76,11 +80,22 @@ export default async function AccountDetailPage({
                   <TableCell>{r.score} / 5</TableCell>
                   <TableCell>{r.respondentName ?? "—"}</TableCell>
                   <TableCell className="max-w-xs truncate text-sm">{r.comment ?? "—"}</TableCell>
+                  {isAdmin && (
+                    <TableCell className="text-right">
+                      <form action={deleteCsatResponseAction}>
+                        <input type="hidden" name="id" value={r.id} />
+                        <input type="hidden" name="accountId" value={accountId} />
+                        <Button variant="outline" size="sm" type="submit">
+                          Delete
+                        </Button>
+                      </form>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
               {csatResponses.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground">
+                  <TableCell colSpan={isAdmin ? 5 : 4} className="text-muted-foreground">
                     No CSAT responses yet.
                   </TableCell>
                 </TableRow>
