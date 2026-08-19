@@ -41,7 +41,7 @@ export default async function CsatLinksPage() {
         </p>
       </div>
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>Generate a link</CardTitle>
         </CardHeader>
