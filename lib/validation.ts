@@ -34,6 +34,15 @@ export const taxonomyRenameSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
 });
 
+export const taxonomyCreateKraSchema = z.object({
+  name: z.string().trim().min(1, "KRA name is required"),
+});
+
+export const taxonomyCreateKpiSchema = z.object({
+  kraId: z.string().min(1),
+  name: z.string().trim().min(1, "KPI name is required"),
+});
+
 export const shareTokenCreateSchema = z.object({
   label: z.string().trim().optional(),
 });
