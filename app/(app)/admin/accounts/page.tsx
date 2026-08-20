@@ -11,6 +11,7 @@ import { getAllAccounts, getTeamMembers } from "@/lib/dashboard-queries";
 import { AccountRowForm } from "./account-row-form";
 import { BulkCreateAccountsForm } from "./bulk-create-form";
 import { CreateAccountForm } from "./create-account-form";
+import { DeleteAllAccountsButton } from "./delete-all-accounts-button";
 
 export default async function AdminAccountsPage() {
   const [accounts, members] = await Promise.all([getAllAccounts(), getTeamMembers()]);
@@ -63,6 +64,15 @@ export default async function AdminAccountsPage() {
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger zone</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DeleteAllAccountsButton />
         </CardContent>
       </Card>
     </div>
