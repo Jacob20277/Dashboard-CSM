@@ -66,11 +66,13 @@ export async function updateAccountAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const isActive = formData.get("isActive") === "on";
+  const csmUserId = String(formData.get("csmUserId") ?? "").trim() || null;
 
   if (!name) return;
 
-  await prisma.account.update({ where: { id }, data: { name, isActive } });
+  await prisma.account.update({ where: { id }, data: { name, isActive, csmUserId } });
   revalidatePath("/admin/accounts");
+  revalidatePath("/log");
 }
 
 export async function deleteAccountAction(

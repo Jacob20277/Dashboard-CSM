@@ -4,18 +4,18 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { importActivityLogsAction, type ImportFormState } from "./actions";
+import { importAccountsAction, type ImportAccountsFormState } from "./accounts-actions";
 
-const initialState: ImportFormState = {};
+const initialState: ImportAccountsFormState = {};
 
-export function ImportForm() {
-  const [state, formAction, pending] = useActionState(importActivityLogsAction, initialState);
+export function ImportAccountsForm() {
+  const [state, formAction, pending] = useActionState(importAccountsAction, initialState);
 
   return (
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="file">CSV or Excel file</Label>
-        <Input id="file" name="file" type="file" accept=".csv,.xlsx,.xls" required />
+        <Label htmlFor="accounts-file">CSV or Excel file</Label>
+        <Input id="accounts-file" name="file" type="file" accept=".csv,.xlsx,.xls" required />
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Importing..." : "Import"}
@@ -23,17 +23,12 @@ export function ImportForm() {
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
 
-      {state?.imported !== undefined && (
+      {(state?.imported !== undefined || state?.updated !== undefined) && (
         <div className="space-y-2 text-sm">
           <p className="text-green-600">
-            Imported {state.imported} row{state.imported === 1 ? "" : "s"}.
+            Created {state.imported ?? 0}, updated {state.updated ?? 0} account
+            {(state.imported ?? 0) + (state.updated ?? 0) === 1 ? "" : "s"}.
           </p>
-          {!!state.orphaned && (
-            <p className="text-amber-600">
-              {state.orphaned} row{state.orphaned === 1 ? "" : "s"} had an unrecognized account
-              and were sent to Orphaned Logs below.
-            </p>
-          )}
           {state.failed && state.failed.length > 0 && (
             <div className="space-y-1">
               <p className="text-red-600">

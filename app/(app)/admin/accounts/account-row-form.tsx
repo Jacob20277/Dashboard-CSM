@@ -10,8 +10,10 @@ const initialState: AccountFormState = {};
 
 export function AccountRowForm({
   account,
+  members,
 }: {
-  account: { id: string; name: string; isActive: boolean };
+  account: { id: string; name: string; isActive: boolean; csmUserId?: string | null };
+  members: { id: string; name: string }[];
 }) {
   const [deleteState, deleteAction, deletePending] = useActionState(
     deleteAccountAction,
@@ -23,6 +25,18 @@ export function AccountRowForm({
       <form action={updateAccountAction} className="flex flex-wrap items-center gap-3">
         <input type="hidden" name="id" value={account.id} />
         <Input name="name" defaultValue={account.name} className="h-8 max-w-xs" required />
+        <select
+          name="csmUserId"
+          defaultValue={account.csmUserId ?? ""}
+          className="border-input h-8 rounded-md border bg-transparent px-2 text-sm"
+        >
+          <option value="">No CSM</option>
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

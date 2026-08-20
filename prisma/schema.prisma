@@ -28,17 +28,23 @@ model User {
   activityLogs       ActivityLog[]
   shareTokens        ShareToken[]
   csatLinks          CsatLink[]
+  managedAccounts    Account[]               @relation("AccountCsm")
+  orphanedLogs       PendingActivityImport[]
 }
 
 model Account {
   id            String         @id @default(cuid())
   name          String         @unique
   isActive      Boolean        @default(true)
+  csmUserId     String?
+  csm           User?          @relation("AccountCsm", fields: [csmUserId], references: [id])
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   activityLogs  ActivityLog[]
   csatLinks     CsatLink[]
   csatResponses CsatResponse[]
+
+  @@index([csmUserId])
 }
 
 model Kra {
@@ -77,6 +83,21 @@ model ActivityLog {
   @@index([userId, activityDate])
   @@index([accountId])
   @@index([isUnmatched])
+}
+
+model PendingActivityImport {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  title           String
+  rawAccountName  String
+  activityDate    DateTime @db.Date
+  durationMinutes Int
+  notes           String?
+  kpiIds          Json
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
 }
 
 model ActivityLogKpi {

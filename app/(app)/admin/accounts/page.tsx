@@ -7,13 +7,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAllAccounts } from "@/lib/dashboard-queries";
+import { getAllAccounts, getTeamMembers } from "@/lib/dashboard-queries";
 import { AccountRowForm } from "./account-row-form";
 import { BulkCreateAccountsForm } from "./bulk-create-form";
 import { CreateAccountForm } from "./create-account-form";
 
 export default async function AdminAccountsPage() {
-  const accounts = await getAllAccounts();
+  const [accounts, members] = await Promise.all([getAllAccounts(), getTeamMembers()]);
 
   return (
     <div className="space-y-6">
@@ -52,7 +52,7 @@ export default async function AdminAccountsPage() {
               {accounts.map((account) => (
                 <TableRow key={account.id}>
                   <TableCell>
-                    <AccountRowForm account={account} />
+                    <AccountRowForm account={account} members={members} />
                   </TableCell>
                 </TableRow>
               ))}

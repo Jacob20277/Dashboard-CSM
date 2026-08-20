@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 export type ImportFormState = {
   error?: string;
   imported?: number;
+  orphaned?: number;
   failed?: { row: number; reason: string }[];
 };
 
@@ -49,6 +50,15 @@ export async function importActivityLogsAction(
     notes: string;
     kpiIds: string[];
   }[] = [];
+  const orphanedRows: {
+    userId: string;
+    title: string;
+    rawAccountName: string;
+    activityDate: Date;
+    durationMinutes: number;
+    notes: string;
+    kpiIds: string[];
+  }[] = [];
 
   for (const row of rows) {
     if (!row.title) {
@@ -61,12 +71,6 @@ export async function importActivityLogsAction(
       : users.find((u) => u.name.toLowerCase() === row.member.toLowerCase());
     if (!member) {
       failed.push({ row: row.rowNumber, reason: `Unknown member "${row.member}"` });
-      continue;
-    }
-
-    const account = accounts.find((a) => a.name.toLowerCase() === row.account.toLowerCase());
-    if (!account) {
-      failed.push({ row: row.rowNumber, reason: `Unknown account "${row.account}"` });
       continue;
     }
 
@@ -102,6 +106,23 @@ export async function importActivityLogsAction(
     }
     if (unknownTag) {
       failed.push({ row: row.rowNumber, reason: `Unknown KPI "${unknownTag}"` });
+      continue;
+    }
+
+    const account = accounts.find((a) => a.name.toLowerCase() === row.account.toLowerCase());
+    if (!account) {
+      // Everything else about this row is valid — only the account name didn't match.
+      // Stage it as an orphaned log instead of discarding it; an admin resolves it later
+      // by picking the real account from the master list.
+      orphanedRows.push({
+        userId: member.id,
+        title: row.title,
+        rawAccountName: row.account,
+        activityDate: new Date(row.date),
+        durationMinutes: duration,
+        notes: row.notes,
+        kpiIds,
+      });
       continue;
     }
 
@@ -142,8 +163,23 @@ export async function importActivityLogsAction(
     });
   }
 
+  if (orphanedRows.length > 0) {
+    await prisma.pendingActivityImport.createMany({
+      data: orphanedRows.map((r) => ({
+        userId: r.userId,
+        title: r.title,
+        rawAccountName: r.rawAccountName,
+        activityDate: r.activityDate,
+        durationMinutes: r.durationMinutes,
+        notes: r.notes,
+        kpiIds: r.kpiIds,
+      })),
+    });
+  }
+
   revalidatePath("/log");
   revalidatePath("/dashboard");
+  revalidatePath("/admin/import");
 
-  return { imported, failed };
+  return { imported, orphaned: orphanedRows.length, failed };
 }

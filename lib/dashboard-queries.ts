@@ -201,7 +201,10 @@ export async function getActiveAccounts() {
 }
 
 export async function getAllAccounts() {
-  return prisma.account.findMany({ orderBy: { name: "asc" } });
+  return prisma.account.findMany({
+    orderBy: { name: "asc" },
+    include: { csm: { select: { id: true, name: true } } },
+  });
 }
 
 export async function getTeamMembers() {
