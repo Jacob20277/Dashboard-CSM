@@ -10,7 +10,7 @@ const prisma = new PrismaClient({ adapter });
 const TAXONOMY = [
   {
     kra: "Retention and Renewals",
-    kpis: ["Renewal Rate", "Churn Risk Management"],
+    kpis: ["Renewal Rate", "Churn Risk Management", "Payment Follow-up"],
   },
   {
     kra: "Product Adoption",
