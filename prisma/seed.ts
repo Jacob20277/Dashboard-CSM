@@ -30,7 +30,11 @@ const TAXONOMY = [
   },
   {
     kra: "Zuper Culture",
-    kpis: ["Login Hours and Availability", "Documentation and Collaboration"],
+    kpis: [
+      "Login Hours and Availability",
+      "Documentation and Collaboration",
+      "CRM Hygiene and Collaboration",
+    ],
   },
 ];
 

@@ -18,15 +18,26 @@ export async function scopeToUserIds(scope: DashboardScope): Promise<string[] | 
   return [scope.userId];
 }
 
-export async function getScopedActivityLogs(scope: DashboardScope, range: DateRange = {}) {
+export interface ActivityLogExtraFilters {
+  accountId?: string;
+  kpiId?: string;
+}
+
+export async function getScopedActivityLogs(
+  scope: DashboardScope,
+  range: DateRange = {},
+  extra: ActivityLogExtraFilters = {}
+) {
   const userIds = await scopeToUserIds(scope);
   return prisma.activityLog.findMany({
     where: {
       userId: userIds ? { in: userIds } : undefined,
+      accountId: extra.accountId || undefined,
       activityDate: {
         gte: range.from,
         lte: range.to,
       },
+      kpiTags: extra.kpiId ? { some: { kpiId: extra.kpiId } } : undefined,
     },
     include: {
       user: { select: { id: true, name: true } },
@@ -175,18 +186,11 @@ export function getFlaggedLogs(logs: ScopedLog[]) {
   return logs.filter((l) => l.isUnmatched);
 }
 
-export const NON_LOGGABLE_KRA_NAME = "Zuper Culture";
-
 export async function getAllKrasWithKpis() {
   return prisma.kra.findMany({
     orderBy: { sortOrder: "asc" },
     include: { kpis: { orderBy: { sortOrder: "asc" } } },
   });
-}
-
-export async function getLoggableKras() {
-  const kras = await getAllKrasWithKpis();
-  return kras.filter((kra) => kra.name !== NON_LOGGABLE_KRA_NAME);
 }
 
 export async function getActiveAccounts() {

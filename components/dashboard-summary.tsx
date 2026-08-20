@@ -38,8 +38,6 @@ export interface AccountTotal {
   flaggedCount: number;
 }
 
-const FIXED_KRA_NAME = "Zuper Culture";
-
 export function DashboardSummary({
   kraTotals,
   kpiTotals,
@@ -105,10 +103,6 @@ export function DashboardSummary({
           ) : (
             <p className="text-muted-foreground text-sm">No matched activity yet.</p>
           )}
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <span className="text-sm font-medium">{FIXED_KRA_NAME}</span>
-            <Badge variant="secondary">Fully Met</Badge>
-          </div>
         </CardContent>
       </Card>
 

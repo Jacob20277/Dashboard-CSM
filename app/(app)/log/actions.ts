@@ -117,3 +117,32 @@ export async function deleteActivityLogAction(formData: FormData) {
   revalidatePath("/log");
   revalidatePath("/dashboard");
 }
+
+export type BulkDeleteState = { error?: string; deletedCount?: number };
+
+export async function bulkDeleteActivityLogsAction(
+  _prev: BulkDeleteState,
+  formData: FormData
+): Promise<BulkDeleteState> {
+  const user = await requireUser();
+  const ids = [...new Set(formData.getAll("ids").map(String).filter(Boolean))];
+  if (ids.length === 0) {
+    return { error: "No entries selected." };
+  }
+
+  if (user.role !== "ADMIN") {
+    const notOwnedCount = await prisma.activityLog.count({
+      where: { id: { in: ids }, userId: { not: user.id } },
+    });
+    if (notOwnedCount > 0) {
+      return { error: "You don't have permission to delete one or more of the selected entries." };
+    }
+  }
+
+  const { count } = await prisma.activityLog.deleteMany({ where: { id: { in: ids } } });
+
+  revalidatePath("/log");
+  revalidatePath("/dashboard");
+
+  return { deletedCount: count };
+}
