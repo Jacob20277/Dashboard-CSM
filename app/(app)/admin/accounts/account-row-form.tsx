@@ -22,7 +22,11 @@ export function AccountRowForm({
 
   return (
     <div className="space-y-1">
-      <form action={updateAccountAction} className="flex flex-wrap items-center gap-3">
+      <form
+        key={`${account.name}-${account.csmUserId ?? ""}-${account.isActive}`}
+        action={updateAccountAction}
+        className="flex flex-wrap items-center gap-3"
+      >
         <input type="hidden" name="id" value={account.id} />
         <Input name="name" defaultValue={account.name} className="h-8 max-w-xs" required />
         <select
