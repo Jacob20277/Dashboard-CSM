@@ -31,6 +31,10 @@ export default async function DashboardPage({
     selectedIds = members.map((m) => m.id);
   } else if (scopeParam && members.some((m) => m.id === scopeParam)) {
     selectedIds = [scopeParam];
+  } else if (user.role === "ADMIN") {
+    // Admin isn't a CSM, so "just me" would always be an empty scope — default
+    // to everyone instead of a phantom selection the checkbox list can't show.
+    selectedIds = members.map((m) => m.id);
   } else {
     selectedIds = [user.id];
   }

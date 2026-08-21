@@ -24,10 +24,13 @@ export function DashboardScopeSelector({
   selectedIds: string[];
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState<Set<string>>(new Set(selectedIds));
-
   const allIds = members.map((m) => m.id);
+  // Guard against a selected id that isn't one of the visible options (e.g. a
+  // non-CSM's own id) — it would otherwise inflate the count with no checkbox
+  // to show for it.
+  const validSelectedIds = selectedIds.filter((id) => allIds.includes(id));
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState<Set<string>>(new Set(validSelectedIds));
   const allSelected = allIds.length > 0 && allIds.every((id) => pending.has(id));
 
   const label = allSelected
@@ -57,7 +60,7 @@ export function DashboardScopeSelector({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) setPending(new Set(selectedIds));
+        if (!next) setPending(new Set(validSelectedIds));
       }}
     >
       <DropdownMenuTrigger
