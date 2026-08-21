@@ -14,6 +14,13 @@ export const createUserSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+export const updateUserSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1, "Name is required"),
+  email: z.string().trim().toLowerCase().email("Enter a valid email"),
+  role: z.enum(["ADMIN", "MEMBER"]),
+});
+
 export const activityLogSchema = z
   .object({
     title: z.string().trim().min(1, "Title is required"),

@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { createUserSchema } from "@/lib/validation";
+import { createUserSchema, updateUserSchema } from "@/lib/validation";
 
 export type UserFormState = { error?: string };
 
@@ -30,6 +30,35 @@ export async function createUserAction(
     await prisma.user.create({
       data: { name, email, passwordHash, role: "MEMBER", mustChangePassword: true },
     });
+  } catch {
+    return { error: "A user with that email already exists." };
+  }
+
+  revalidatePath("/admin/users");
+  return {};
+}
+
+export type UpdateUserFormState = { error?: string };
+
+export async function updateUserAction(
+  _prev: UpdateUserFormState,
+  formData: FormData
+): Promise<UpdateUserFormState> {
+  await requireAdmin();
+
+  const parsed = updateUserSchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+    email: formData.get("email"),
+    role: formData.get("role"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const { id, name, email, role } = parsed.data;
+  try {
+    await prisma.user.update({ where: { id }, data: { name, email, role } });
   } catch {
     return { error: "A user with that email already exists." };
   }

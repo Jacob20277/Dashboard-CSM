@@ -13,6 +13,7 @@ import {
 import { getTeamMembers } from "@/lib/dashboard-queries";
 import { resetPasswordAction, setUserActiveAction } from "./actions";
 import { CreateUserForm } from "./create-user-form";
+import { EditUserDialog } from "./edit-user-dialog";
 
 export default async function AdminUsersPage() {
   const users = await getTeamMembers();
@@ -64,36 +65,39 @@ export default async function AdminUsersPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {u.role === "MEMBER" ? (
-                      <div className="flex flex-wrap items-center gap-3">
-                        <form action={setUserActiveAction}>
-                          <input type="hidden" name="id" value={u.id} />
-                          <input
-                            type="hidden"
-                            name="nextActive"
-                            value={(!u.isActive).toString()}
-                          />
-                          <Button variant="outline" size="sm" type="submit">
-                            {u.isActive ? "Deactivate" : "Reactivate"}
-                          </Button>
-                        </form>
-                        <form action={resetPasswordAction} className="flex items-center gap-2">
-                          <input type="hidden" name="id" value={u.id} />
-                          <Input
-                            name="newPassword"
-                            type="text"
-                            placeholder="New temp password"
-                            minLength={8}
-                            className="h-8 w-40"
-                          />
-                          <Button variant="outline" size="sm" type="submit">
-                            Reset password
-                          </Button>
-                        </form>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Shared admin login</span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <EditUserDialog user={u} />
+                      {u.role === "MEMBER" ? (
+                        <>
+                          <form action={setUserActiveAction}>
+                            <input type="hidden" name="id" value={u.id} />
+                            <input
+                              type="hidden"
+                              name="nextActive"
+                              value={(!u.isActive).toString()}
+                            />
+                            <Button variant="outline" size="sm" type="submit">
+                              {u.isActive ? "Deactivate" : "Reactivate"}
+                            </Button>
+                          </form>
+                          <form action={resetPasswordAction} className="flex items-center gap-2">
+                            <input type="hidden" name="id" value={u.id} />
+                            <Input
+                              name="newPassword"
+                              type="text"
+                              placeholder="New temp password"
+                              minLength={8}
+                              className="h-8 w-40"
+                            />
+                            <Button variant="outline" size="sm" type="submit">
+                              Reset password
+                            </Button>
+                          </form>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Shared admin login</span>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
