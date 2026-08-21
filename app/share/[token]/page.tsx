@@ -107,9 +107,9 @@ export default async function SharePage({
         accountTotals={accountTotals}
         flaggedCount={flaggedCount}
         churnedAccountsCount={churnedAccountsCount}
-      />
-
-      <KpiTargetsTable rows={kpiTargetRows} />
+      >
+        <KpiTargetsTable rows={kpiTargetRows} />
+      </DashboardSummary>
     </div>
   );
 }

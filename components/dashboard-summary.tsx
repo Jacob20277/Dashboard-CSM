@@ -46,6 +46,7 @@ export function DashboardSummary({
   accountHrefBase,
   churnedAccountsCount,
   churnedAccountsHref,
+  children,
 }: {
   kraTotals: KraTotal[];
   kpiTotals: KpiTotal[];
@@ -55,6 +56,7 @@ export function DashboardSummary({
   accountHrefBase?: string;
   churnedAccountsCount: number;
   churnedAccountsHref?: string;
+  children?: React.ReactNode;
 }) {
   const totalMinutes = kraTotals.reduce((sum, k) => sum + k.totalMinutes, 0);
   const totalEntries = kraTotals.reduce((sum, k) => sum + k.entryCount, 0);
@@ -105,6 +107,8 @@ export function DashboardSummary({
           </CardContent>
         </Card>
       </div>
+
+      {children}
 
       <Card>
         <CardHeader>
