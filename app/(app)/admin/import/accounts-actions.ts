@@ -33,7 +33,11 @@ export async function importAccountsAction(
     return { error: "No data rows found in the file." };
   }
 
-  const users = await prisma.user.findMany({ select: { id: true, name: true, email: true } });
+  // ADMIN is a privilege, not a CSM — never assign it as an account owner via import.
+  const users = await prisma.user.findMany({
+    where: { role: "MEMBER" },
+    select: { id: true, name: true, email: true },
+  });
 
   const failed: { row: number; reason: string }[] = [];
   const validRows: { accountName: string; csmUserId: string | null }[] = [];

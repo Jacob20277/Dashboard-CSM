@@ -6,7 +6,7 @@ import {
   computeAccountTotals,
   computeKpiTotals,
   computeKraTotals,
-  getActiveTeamMembers,
+  getActiveCsmMembers,
   getFlaggedLogs,
   getScopedActivityLogs,
   type DashboardScope,
@@ -23,10 +23,10 @@ export default async function SharePage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ scope?: string }>;
+  searchParams: Promise<{ scope?: string; members?: string }>;
 }) {
   const { token } = await params;
-  const { scope: scopeParam } = await searchParams;
+  const { scope: scopeParam, members: membersParam } = await searchParams;
 
   const shareToken = await prisma.shareToken.findUnique({ where: { token } });
 
@@ -46,17 +46,19 @@ export default async function SharePage({
     data: { lastAccessedAt: new Date() },
   });
 
-  const members = await getActiveTeamMembers();
+  const members = await getActiveCsmMembers();
 
-  let scope: DashboardScope;
-  let selectedValue: string;
-  if (scopeParam && members.some((m) => m.id === scopeParam)) {
-    scope = { type: "individual", userId: scopeParam };
-    selectedValue = scopeParam;
+  let selectedIds: string[];
+  if (membersParam !== undefined) {
+    const requested = new Set(membersParam.split(",").filter(Boolean));
+    selectedIds = members.filter((m) => requested.has(m.id)).map((m) => m.id);
+  } else if (scopeParam && members.some((m) => m.id === scopeParam)) {
+    selectedIds = [scopeParam];
   } else {
-    scope = { type: "team" };
-    selectedValue = "team";
+    selectedIds = members.map((m) => m.id);
   }
+
+  const scope: DashboardScope = { type: "members", userIds: selectedIds };
 
   const [logs, csatResponses] = await Promise.all([
     getScopedActivityLogs(scope),
@@ -77,8 +79,8 @@ export default async function SharePage({
         </div>
         <DashboardScopeSelector
           basePath={`/share/${token}`}
-          value={selectedValue}
           members={members}
+          selectedIds={selectedIds}
         />
       </div>
 

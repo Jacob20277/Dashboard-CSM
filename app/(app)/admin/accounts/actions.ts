@@ -66,9 +66,19 @@ export async function updateAccountAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const isActive = formData.get("isActive") === "on";
-  const csmUserId = String(formData.get("csmUserId") ?? "").trim() || null;
+  const csmUserIdRaw = String(formData.get("csmUserId") ?? "").trim() || null;
 
   if (!name) return;
+
+  // ADMIN is a privilege, not a CSM — never let it be saved as an account owner.
+  const csmUserId = csmUserIdRaw
+    ? (
+        await prisma.user.findFirst({
+          where: { id: csmUserIdRaw, role: "MEMBER" },
+          select: { id: true },
+        })
+      )?.id ?? null
+    : null;
 
   await prisma.account.update({ where: { id }, data: { name, isActive, csmUserId } });
   revalidatePath("/admin/accounts");

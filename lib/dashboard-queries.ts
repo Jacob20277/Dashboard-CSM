@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
-export type DashboardScope = { type: "team" } | { type: "individual"; userId: string };
+export type DashboardScope =
+  | { type: "team" }
+  | { type: "individual"; userId: string }
+  | { type: "members"; userIds: string[] };
 
 export interface DateRange {
   from?: Date;
@@ -14,6 +17,9 @@ export async function scopeToUserIds(scope: DashboardScope): Promise<string[] | 
       select: { id: true },
     });
     return users.map((u) => u.id);
+  }
+  if (scope.type === "members") {
+    return scope.userIds;
   }
   return [scope.userId];
 }
@@ -213,4 +219,17 @@ export async function getTeamMembers() {
 
 export async function getActiveTeamMembers() {
   return prisma.user.findMany({ where: { isActive: true }, orderBy: { name: "asc" } });
+}
+
+// ADMIN is a privilege, not a CSM — exclude it from anywhere a person is being
+// picked as an account owner or as an individual to filter/report metrics by.
+export async function getCsmMembers() {
+  return prisma.user.findMany({ where: { role: "MEMBER" }, orderBy: { name: "asc" } });
+}
+
+export async function getActiveCsmMembers() {
+  return prisma.user.findMany({
+    where: { role: "MEMBER", isActive: true },
+    orderBy: { name: "asc" },
+  });
 }

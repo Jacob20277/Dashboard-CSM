@@ -6,7 +6,7 @@ import {
   computeAccountTotals,
   computeKpiTotals,
   computeKraTotals,
-  getActiveTeamMembers,
+  getActiveCsmMembers,
   getFlaggedLogs,
   getScopedActivityLogs,
   type DashboardScope,
@@ -16,24 +16,25 @@ import { computeCsatSummary, getCsatResponses } from "@/lib/csat-queries";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ scope?: string }>;
+  searchParams: Promise<{ scope?: string; members?: string }>;
 }) {
   const user = await requireUser();
-  const { scope: scopeParam } = await searchParams;
-  const members = await getActiveTeamMembers();
+  const { scope: scopeParam, members: membersParam } = await searchParams;
+  const members = await getActiveCsmMembers();
 
-  let scope: DashboardScope;
-  let selectedValue: string;
-  if (scopeParam === "team") {
-    scope = { type: "team" };
-    selectedValue = "team";
+  let selectedIds: string[];
+  if (membersParam !== undefined) {
+    const requested = new Set(membersParam.split(",").filter(Boolean));
+    selectedIds = members.filter((m) => requested.has(m.id)).map((m) => m.id);
+  } else if (scopeParam === "team") {
+    selectedIds = members.map((m) => m.id);
   } else if (scopeParam && members.some((m) => m.id === scopeParam)) {
-    scope = { type: "individual", userId: scopeParam };
-    selectedValue = scopeParam;
+    selectedIds = [scopeParam];
   } else {
-    scope = { type: "individual", userId: user.id };
-    selectedValue = user.id;
+    selectedIds = [user.id];
   }
+
+  const scope: DashboardScope = { type: "members", userIds: selectedIds };
 
   const [logs, csatResponses] = await Promise.all([
     getScopedActivityLogs(scope),
@@ -49,7 +50,11 @@ export default async function DashboardPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">Dashboard</h1>
-        <DashboardScopeSelector basePath="/dashboard" value={selectedValue} members={members} />
+        <DashboardScopeSelector
+          basePath="/dashboard"
+          members={members}
+          selectedIds={selectedIds}
+        />
       </div>
 
       <CsatSummaryCard

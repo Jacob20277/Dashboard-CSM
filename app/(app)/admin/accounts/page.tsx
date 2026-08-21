@@ -7,14 +7,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAllAccounts, getTeamMembers } from "@/lib/dashboard-queries";
+import { getAllAccounts, getCsmMembers } from "@/lib/dashboard-queries";
 import { AccountRowForm } from "./account-row-form";
 import { BulkCreateAccountsForm } from "./bulk-create-form";
 import { CreateAccountForm } from "./create-account-form";
 import { DeleteAllAccountsButton } from "./delete-all-accounts-button";
 
 export default async function AdminAccountsPage() {
-  const [accounts, members] = await Promise.all([getAllAccounts(), getTeamMembers()]);
+  const [accounts, members] = await Promise.all([getAllAccounts(), getCsmMembers()]);
 
   return (
     <div className="space-y-6">
