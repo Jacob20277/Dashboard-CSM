@@ -85,7 +85,7 @@ export default async function AdminImportPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Orphaned logs</CardTitle>
+          <CardTitle>Orphaned logs ({orphanedLogs.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground text-sm">

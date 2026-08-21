@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/searchable-select";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { discardOrphanedLogAction, resolveOrphanedLogAction } from "./orphaned-actions";
 
@@ -40,21 +41,13 @@ export function OrphanedLogRow({
         <div className="flex items-center justify-end gap-2">
           <form ref={formRef} action={resolveOrphanedLogAction}>
             <input type="hidden" name="id" value={pending.id} />
-            <select
+            <SearchableSelect
               name="accountId"
-              defaultValue=""
-              onChange={() => formRef.current?.requestSubmit()}
-              className="border-input h-8 rounded-md border bg-transparent px-2 text-sm"
-            >
-              <option value="" disabled>
-                Choose account…
-              </option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
+              options={accounts.map((a) => ({ value: a.id, label: a.name }))}
+              placeholder="Choose account…"
+              onSelect={() => formRef.current?.requestSubmit()}
+              className="w-48"
+            />
           </form>
           <form action={discardOrphanedLogAction}>
             <input type="hidden" name="id" value={pending.id} />
