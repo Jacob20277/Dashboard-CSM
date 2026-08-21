@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts",
+    "db:backup": "tsx scripts/backup-db.ts",
     "vercel-build": "prisma generate && node scripts/migrate-deploy-with-retry.mjs && next build"
   },
   "dependencies": {
