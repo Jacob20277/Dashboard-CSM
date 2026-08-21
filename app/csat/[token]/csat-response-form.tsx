@@ -52,7 +52,7 @@ export function CsatResponseForm({
         <Textarea id="comment" name="comment" rows={3} />
       </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
       <Button type="submit" disabled={pending || !allAnswered}>
         {pending ? "Submitting..." : "Submit feedback"}

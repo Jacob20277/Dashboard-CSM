@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -16,6 +17,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <nav className="flex flex-wrap items-center gap-4 text-sm font-medium">
+            <Link href="/dashboard" className="mr-2 flex items-center">
+              <BrandLogo className="h-7 w-auto" />
+            </Link>
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/log">Log Activity</Link>
             <Link href="/csat-links">CSAT Links</Link>

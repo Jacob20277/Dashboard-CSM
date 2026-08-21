@@ -21,7 +21,9 @@ export function StarRating({
           onClick={() => onChange(star)}
           onMouseEnter={() => setHovered(star)}
           onMouseLeave={() => setHovered(0)}
-          className="text-3xl leading-none"
+          className={`text-3xl leading-none transition-colors ${
+            (hovered || value) >= star ? "text-primary" : "text-muted-foreground/40"
+          }`}
         >
           {(hovered || value) >= star ? "★" : "☆"}
         </button>

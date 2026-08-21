@@ -1,6 +1,7 @@
 import { DashboardScopeSelector } from "@/components/dashboard-scope-selector";
 import { DashboardSummary } from "@/components/dashboard-summary";
 import { CsatSummaryCard } from "@/components/csat-summary-card";
+import { BrandLogo } from "@/components/brand-logo";
 import {
   computeAccountTotals,
   computeKpiTotals,
@@ -31,7 +32,8 @@ export default async function SharePage({
 
   if (!shareToken || shareToken.revokedAt) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="from-background to-accent flex min-h-screen flex-col items-center justify-center gap-6 bg-gradient-to-b p-6">
+        <BrandLogo className="h-10 w-auto" />
         <p className="text-muted-foreground max-w-sm text-center text-sm">
           This link is invalid or has been revoked. Contact the person who shared it with you.
         </p>
@@ -68,8 +70,11 @@ export default async function SharePage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">Dashboard-CSM</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+        <div className="flex items-center gap-3">
+          <BrandLogo className="h-8 w-auto" />
+          <h1 className="text-xl font-semibold">Dashboard-CSM</h1>
+        </div>
         <DashboardScopeSelector
           basePath={`/share/${token}`}
           value={selectedValue}

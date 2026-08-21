@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BrandLogo } from "@/components/brand-logo";
 import { prisma } from "@/lib/prisma";
 import { submitCsatResponse } from "./actions";
 import { CsatResponseForm } from "./csat-response-form";
@@ -21,7 +22,8 @@ export default async function CsatSurveyPage({
 
   if (!link || link.revokedAt) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="from-background to-accent flex min-h-screen flex-col items-center justify-center gap-6 bg-gradient-to-b p-6">
+        <BrandLogo className="h-10 w-auto" />
         <p className="text-muted-foreground max-w-sm text-center text-sm">
           This link is no longer valid. Please reach out to your contact for a new one.
         </p>
@@ -32,8 +34,9 @@ export default async function CsatSurveyPage({
   const action = submitCsatResponse.bind(null, token);
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <Card className="w-full max-w-md">
+    <div className="from-background to-accent flex min-h-screen flex-col items-center justify-center gap-6 bg-gradient-to-b p-6">
+      <BrandLogo className="h-10 w-auto" />
+      <Card className="w-full max-w-md border-t-4 border-t-primary shadow-lg">
         <CardHeader>
           <CardTitle>How are we doing, {link.account.name}?</CardTitle>
         </CardHeader>
