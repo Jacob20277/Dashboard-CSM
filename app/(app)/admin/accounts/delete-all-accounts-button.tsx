@@ -30,15 +30,17 @@ export function DeleteAllAccountsButton() {
         <DialogHeader>
           <DialogTitle>This permanently deletes everything</DialogTitle>
           <DialogDescription>
-            Every account, every activity log entry, every CSAT link, and every CSAT response
-            will be deleted. This cannot be undone. Type <strong>DELETE</strong> to confirm.
+            Every account, every activity log entry (including orphaned/unresolved ones), every
+            CSAT link, and every CSAT response will be deleted. This cannot be undone. Type{" "}
+            <strong>DELETE</strong> to confirm.
           </DialogDescription>
         </DialogHeader>
         {state.error && <p className="text-sm text-destructive">{state.error}</p>}
         {state.result && (
           <p className="text-sm text-green-600">
             Deleted {state.result.accounts} accounts, {state.result.activityLogs} activity logs,{" "}
-            {state.result.csatLinks} CSAT links, {state.result.csatResponses} CSAT responses.
+            {state.result.orphanedLogs} orphaned logs, {state.result.csatLinks} CSAT links,{" "}
+            {state.result.csatResponses} CSAT responses.
           </p>
         )}
         <form action={formAction} className="space-y-3">
