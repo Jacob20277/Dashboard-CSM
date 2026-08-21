@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-guards";
 import { parseAccountSpreadsheet } from "@/lib/account-import";
+import { matchUserByEmailOrName } from "@/lib/user-match";
 import { prisma } from "@/lib/prisma";
 
 export type ImportAccountsFormState = {
@@ -40,9 +41,7 @@ export async function importAccountsAction(
   for (const row of rows) {
     let csmUserId: string | null = null;
     if (row.csm) {
-      const match = row.csm.includes("@")
-        ? users.find((u) => u.email.toLowerCase() === row.csm.toLowerCase())
-        : users.find((u) => u.name.toLowerCase() === row.csm.toLowerCase());
+      const match = matchUserByEmailOrName(users, row.csm);
       if (!match) {
         failed.push({ row: row.rowNumber, reason: `Unknown CSM "${row.csm}"` });
         continue;

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-guards";
 import { parseSpreadsheet } from "@/lib/activity-import";
+import { matchUserByEmailOrName } from "@/lib/user-match";
 import { prisma } from "@/lib/prisma";
 
 export type ImportFormState = {
@@ -66,9 +67,7 @@ export async function importActivityLogsAction(
       continue;
     }
 
-    const member = row.member.includes("@")
-      ? users.find((u) => u.email.toLowerCase() === row.member.toLowerCase())
-      : users.find((u) => u.name.toLowerCase() === row.member.toLowerCase());
+    const member = matchUserByEmailOrName(users, row.member);
     if (!member) {
       failed.push({ row: row.rowNumber, reason: `Unknown member "${row.member}"` });
       continue;
