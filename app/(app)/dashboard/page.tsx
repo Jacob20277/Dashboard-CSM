@@ -1,6 +1,7 @@
 import { DashboardScopeSelector } from "@/components/dashboard-scope-selector";
 import { DashboardSummary } from "@/components/dashboard-summary";
 import { CsatSummaryCard } from "@/components/csat-summary-card";
+import { DateRangeFilter } from "@/components/date-range-filter";
 import { requireUser } from "@/lib/auth-guards";
 import {
   computeAccountTotals,
@@ -17,10 +18,11 @@ import { computeCsatSummary, getCsatResponses } from "@/lib/csat-queries";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ scope?: string; members?: string }>;
+  searchParams: Promise<{ scope?: string; members?: string; from?: string; to?: string }>;
 }) {
   const user = await requireUser();
-  const { scope: scopeParam, members: membersParam } = await searchParams;
+  const { scope: scopeParam, members: membersParam, from, to } = await searchParams;
+  const range = { from: from ? new Date(from) : undefined, to: to ? new Date(to) : undefined };
   const members = await getActiveCsmMembers();
 
   let selectedIds: string[];
@@ -42,8 +44,8 @@ export default async function DashboardPage({
   const scope: DashboardScope = { type: "members", userIds: selectedIds };
 
   const [logs, csatResponses, churnedAccountsCount] = await Promise.all([
-    getScopedActivityLogs(scope),
-    getCsatResponses(scope),
+    getScopedActivityLogs(scope, range),
+    getCsatResponses(scope, range),
     getChurnedAccountsCount(),
   ]);
   const kraTotals = computeKraTotals(logs);
@@ -56,11 +58,14 @@ export default async function DashboardPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">Dashboard</h1>
-        <DashboardScopeSelector
-          basePath="/dashboard"
-          members={members}
-          selectedIds={selectedIds}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <DateRangeFilter />
+          <DashboardScopeSelector
+            basePath="/dashboard"
+            members={members}
+            selectedIds={selectedIds}
+          />
+        </div>
       </div>
 
       <CsatSummaryCard

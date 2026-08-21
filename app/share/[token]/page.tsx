@@ -1,6 +1,7 @@
 import { DashboardScopeSelector } from "@/components/dashboard-scope-selector";
 import { DashboardSummary } from "@/components/dashboard-summary";
 import { CsatSummaryCard } from "@/components/csat-summary-card";
+import { DateRangeFilter } from "@/components/date-range-filter";
 import { BrandLogo } from "@/components/brand-logo";
 import {
   computeAccountTotals,
@@ -24,10 +25,11 @@ export default async function SharePage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ scope?: string; members?: string }>;
+  searchParams: Promise<{ scope?: string; members?: string; from?: string; to?: string }>;
 }) {
   const { token } = await params;
-  const { scope: scopeParam, members: membersParam } = await searchParams;
+  const { scope: scopeParam, members: membersParam, from, to } = await searchParams;
+  const range = { from: from ? new Date(from) : undefined, to: to ? new Date(to) : undefined };
 
   const shareToken = await prisma.shareToken.findUnique({ where: { token } });
 
@@ -62,8 +64,8 @@ export default async function SharePage({
   const scope: DashboardScope = { type: "members", userIds: selectedIds };
 
   const [logs, csatResponses, churnedAccountsCount] = await Promise.all([
-    getScopedActivityLogs(scope),
-    getCsatResponses(scope),
+    getScopedActivityLogs(scope, range),
+    getCsatResponses(scope, range),
     getChurnedAccountsCount(),
   ]);
   const kraTotals = computeKraTotals(logs);
@@ -79,11 +81,14 @@ export default async function SharePage({
           <BrandLogo className="h-8 w-auto" />
           <h1 className="text-xl font-semibold">Dashboard-CSM</h1>
         </div>
-        <DashboardScopeSelector
-          basePath={`/share/${token}`}
-          members={members}
-          selectedIds={selectedIds}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <DateRangeFilter />
+          <DashboardScopeSelector
+            basePath={`/share/${token}`}
+            members={members}
+            selectedIds={selectedIds}
+          />
+        </div>
       </div>
 
       <CsatSummaryCard
