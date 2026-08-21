@@ -1,7 +1,5 @@
-import { Fragment } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import type { KpiTargetRow } from "@/lib/kpi-targets";
 
 function AttainedBadge({ tracked, attained }: { tracked: boolean; attained: boolean | null }) {
@@ -27,34 +25,30 @@ export function KpiTargetsTable({ rows }: { rows: KpiTargetRow[] }) {
       <CardHeader>
         <CardTitle>KRA / KPI targets</CardTitle>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableBody>
-            {[...groups.entries()].map(([kraName, kraRows]) => (
-              <Fragment key={kraName}>
-                <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={3} className="text-muted-foreground bg-muted/40 font-semibold">
-                    {kraName}
-                  </TableCell>
-                </TableRow>
-                {kraRows.map((row) => (
-                  <TableRow key={row.targetText}>
-                    <TableCell className="max-w-md">
-                      <p>{row.targetText}</p>
-                      <p className="text-muted-foreground mt-1 text-xs">{row.actualText}</p>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap align-top">
+      <CardContent className="space-y-6">
+        {[...groups.entries()].map(([kraName, kraRows]) => (
+          <div key={kraName} className="space-y-3">
+            <h3 className="text-sm font-semibold">{kraName}</h3>
+            <div className="divide-y rounded-lg border">
+              {kraRows.map((row) => (
+                <div key={row.targetText} className="space-y-1.5 p-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <p className="min-w-0 flex-1 text-sm">{row.targetText}</p>
+                    <div className="shrink-0">
                       <AttainedBadge tracked={row.tracked} attained={row.attained} />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground max-w-sm text-sm">
-                      {row.guidance ?? "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </Fragment>
-            ))}
-          </TableBody>
-        </Table>
+                    </div>
+                  </div>
+                  {row.actualText && (
+                    <p className="text-muted-foreground text-xs">{row.actualText}</p>
+                  )}
+                  {row.guidance && (
+                    <p className="text-muted-foreground text-xs">→ {row.guidance}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );

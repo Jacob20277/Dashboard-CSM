@@ -279,7 +279,7 @@ export function computeKpiTargets(
           targetText: target.targetText,
           tracked: false,
           attained: null,
-          actualText: "Not tracked",
+          actualText: "",
           guidance: target.reason,
         };
     }
