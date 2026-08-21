@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/table";
 import { getAllAccounts, getCsmMembers } from "@/lib/dashboard-queries";
 import { AccountRowForm } from "./account-row-form";
-import { BulkCreateAccountsForm } from "./bulk-create-form";
 import { CreateAccountForm } from "./create-account-form";
 import { DeleteAllAccountsButton } from "./delete-all-accounts-button";
 
@@ -26,15 +25,6 @@ export default async function AdminAccountsPage() {
         </CardHeader>
         <CardContent>
           <CreateAccountForm />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Bulk create accounts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BulkCreateAccountsForm />
         </CardContent>
       </Card>
 

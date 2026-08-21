@@ -4,10 +4,6 @@ export const accountSchema = z.object({
   name: z.string().trim().min(1, "Account name is required"),
 });
 
-export const bulkCreateAccountsSchema = z.object({
-  namesBlob: z.string().trim().min(1, "Paste at least one account name"),
-});
-
 export const createUserSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   email: z.string().trim().toLowerCase().email("Enter a valid email"),

@@ -3,10 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { accountSchema, bulkCreateAccountsSchema } from "@/lib/validation";
+import { accountSchema } from "@/lib/validation";
 
 export type AccountFormState = { error?: string };
-export type BulkAccountFormState = { error?: string; result?: { created: number; skipped: number } };
 
 export async function createAccountAction(
   _prev: AccountFormState,
@@ -29,36 +28,6 @@ export async function createAccountAction(
 
   revalidatePath("/admin/accounts");
   return {};
-}
-
-export async function bulkCreateAccountsAction(
-  _prev: BulkAccountFormState,
-  formData: FormData
-): Promise<BulkAccountFormState> {
-  await requireAdmin();
-
-  const parsed = bulkCreateAccountsSchema.safeParse({
-    namesBlob: formData.get("namesBlob"),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
-
-  const names = [...new Set(parsed.data.namesBlob.split("#").map((n) => n.trim()).filter(Boolean))];
-  if (names.length === 0) {
-    return { error: "No account names found" };
-  }
-
-  const before = await prisma.account.count();
-  await prisma.account.createMany({
-    data: names.map((name) => ({ name })),
-    skipDuplicates: true,
-  });
-  const after = await prisma.account.count();
-  const created = after - before;
-
-  revalidatePath("/admin/accounts");
-  return { result: { created, skipped: names.length - created } };
 }
 
 export async function updateAccountAction(formData: FormData) {
