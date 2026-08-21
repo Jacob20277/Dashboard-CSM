@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-guards";
 import { parseAccountSpreadsheet } from "@/lib/account-import";
+import { matchSingleAccount } from "@/lib/account-match";
 import { matchUserByEmailOrName } from "@/lib/user-match";
 import { prisma } from "@/lib/prisma";
 
@@ -67,9 +68,7 @@ export async function importAccountsAction(
   let imported = 0;
   let updated = 0;
   for (const row of deduped.values()) {
-    const existing = existingAccounts.find(
-      (a) => a.name.toLowerCase() === row.accountName.toLowerCase()
-    );
+    const existing = matchSingleAccount(existingAccounts, row.accountName);
     if (existing) {
       await prisma.account.update({
         where: { id: existing.id },

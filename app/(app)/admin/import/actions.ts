@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-guards";
 import { parseSpreadsheet } from "@/lib/activity-import";
+import { matchSingleAccount } from "@/lib/account-match";
 import { matchUserByEmailOrName } from "@/lib/user-match";
 import { prisma } from "@/lib/prisma";
 
@@ -108,7 +109,7 @@ export async function importActivityLogsAction(
       continue;
     }
 
-    const account = accounts.find((a) => a.name.toLowerCase() === row.account.toLowerCase());
+    const account = matchSingleAccount(accounts, row.account);
     if (!account) {
       // Everything else about this row is valid — only the account name didn't match.
       // Stage it as an orphaned log instead of discarding it; an admin resolves it later

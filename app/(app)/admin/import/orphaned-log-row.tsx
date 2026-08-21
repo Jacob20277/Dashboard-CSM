@@ -9,6 +9,7 @@ import { discardOrphanedLogAction, resolveOrphanedLogAction } from "./orphaned-a
 export function OrphanedLogRow({
   pending,
   accounts,
+  suggestedAccounts,
 }: {
   pending: {
     id: string;
@@ -20,6 +21,7 @@ export function OrphanedLogRow({
     user: { name: string };
   };
   accounts: { id: string; name: string }[];
+  suggestedAccounts: { id: string; name: string }[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -38,23 +40,39 @@ export function OrphanedLogRow({
       <TableCell>{pending.durationMinutes} min</TableCell>
       <TableCell className="max-w-xs truncate text-sm">{pending.notes}</TableCell>
       <TableCell className="text-right">
-        <div className="flex items-center justify-end gap-2">
-          <form ref={formRef} action={resolveOrphanedLogAction}>
-            <input type="hidden" name="id" value={pending.id} />
-            <SearchableSelect
-              name="accountId"
-              options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-              placeholder="Choose account…"
-              onSelect={() => formRef.current?.requestSubmit()}
-              className="w-48"
-            />
-          </form>
-          <form action={discardOrphanedLogAction}>
-            <input type="hidden" name="id" value={pending.id} />
-            <Button variant="outline" size="sm" type="submit">
-              Discard
-            </Button>
-          </form>
+        <div className="flex flex-col items-end gap-1.5">
+          {suggestedAccounts.length > 0 && (
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <span className="text-muted-foreground text-xs">Did you mean:</span>
+              {suggestedAccounts.map((a) => (
+                <form key={a.id} action={resolveOrphanedLogAction}>
+                  <input type="hidden" name="id" value={pending.id} />
+                  <input type="hidden" name="accountId" value={a.id} />
+                  <Button variant="outline" size="sm" type="submit">
+                    {a.name}
+                  </Button>
+                </form>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center justify-end gap-2">
+            <form ref={formRef} action={resolveOrphanedLogAction}>
+              <input type="hidden" name="id" value={pending.id} />
+              <SearchableSelect
+                name="accountId"
+                options={accounts.map((a) => ({ value: a.id, label: a.name }))}
+                placeholder="Choose account…"
+                onSelect={() => formRef.current?.requestSubmit()}
+                className="w-48"
+              />
+            </form>
+            <form action={discardOrphanedLogAction}>
+              <input type="hidden" name="id" value={pending.id} />
+              <Button variant="outline" size="sm" type="submit">
+                Discard
+              </Button>
+            </form>
+          </div>
         </div>
       </TableCell>
     </TableRow>

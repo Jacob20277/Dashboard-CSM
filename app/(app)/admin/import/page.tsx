@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { matchAccountCandidates } from "@/lib/account-match";
 import { getAllAccounts } from "@/lib/dashboard-queries";
 import { prisma } from "@/lib/prisma";
 import { ImportForm } from "./import-form";
@@ -107,7 +108,12 @@ export default async function AdminImportPage() {
             </TableHeader>
             <TableBody>
               {orphanedLogs.map((pending) => (
-                <OrphanedLogRow key={pending.id} pending={pending} accounts={accounts} />
+                <OrphanedLogRow
+                  key={pending.id}
+                  pending={pending}
+                  accounts={accounts}
+                  suggestedAccounts={matchAccountCandidates(accounts, pending.rawAccountName)}
+                />
               ))}
               {orphanedLogs.length === 0 && (
                 <TableRow>
