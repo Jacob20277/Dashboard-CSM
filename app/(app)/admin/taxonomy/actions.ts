@@ -19,7 +19,11 @@ export async function renameKraAction(formData: FormData) {
   });
   if (!parsed.success) return;
 
-  await prisma.kra.update({ where: { id: parsed.data.id }, data: { name: parsed.data.name } });
+  try {
+    await prisma.kra.update({ where: { id: parsed.data.id }, data: { name: parsed.data.name } });
+  } catch {
+    return;
+  }
   revalidatePath("/admin/taxonomy");
 }
 
@@ -31,7 +35,11 @@ export async function renameKpiAction(formData: FormData) {
   });
   if (!parsed.success) return;
 
-  await prisma.kpi.update({ where: { id: parsed.data.id }, data: { name: parsed.data.name } });
+  try {
+    await prisma.kpi.update({ where: { id: parsed.data.id }, data: { name: parsed.data.name } });
+  } catch {
+    return;
+  }
   revalidatePath("/admin/taxonomy");
 }
 
