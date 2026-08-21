@@ -2,6 +2,7 @@ import { DashboardScopeSelector } from "@/components/dashboard-scope-selector";
 import { DashboardSummary } from "@/components/dashboard-summary";
 import { CsatSummaryCard } from "@/components/csat-summary-card";
 import { DateRangeFilter } from "@/components/date-range-filter";
+import { KpiTargetsTable } from "@/components/kpi-targets-table";
 import { BrandLogo } from "@/components/brand-logo";
 import {
   computeAccountTotals,
@@ -10,10 +11,12 @@ import {
   getActiveCsmMembers,
   getChurnedAccountsCount,
   getFlaggedLogs,
+  getScopedActiveAccounts,
   getScopedActivityLogs,
   type DashboardScope,
 } from "@/lib/dashboard-queries";
 import { computeCsatSummary, getCsatResponses } from "@/lib/csat-queries";
+import { computeKpiTargets } from "@/lib/kpi-targets";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = {
@@ -63,16 +66,18 @@ export default async function SharePage({
 
   const scope: DashboardScope = { type: "members", userIds: selectedIds };
 
-  const [logs, csatResponses, churnedAccountsCount] = await Promise.all([
+  const [logs, csatResponses, churnedAccountsCount, scopedActiveAccounts] = await Promise.all([
     getScopedActivityLogs(scope, range),
     getCsatResponses(scope, range),
     getChurnedAccountsCount(),
+    getScopedActiveAccounts(selectedIds),
   ]);
   const kraTotals = computeKraTotals(logs);
   const kpiTotals = computeKpiTotals(logs);
   const accountTotals = computeAccountTotals(logs);
   const flaggedCount = getFlaggedLogs(logs).length;
   const csatSummary = computeCsatSummary(csatResponses);
+  const kpiTargetRows = computeKpiTargets(logs, scopedActiveAccounts, csatResponses);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
@@ -103,6 +108,8 @@ export default async function SharePage({
         flaggedCount={flaggedCount}
         churnedAccountsCount={churnedAccountsCount}
       />
+
+      <KpiTargetsTable rows={kpiTargetRows} />
     </div>
   );
 }

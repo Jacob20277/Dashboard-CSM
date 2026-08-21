@@ -69,7 +69,7 @@ export async function getAccountActivityLogs(accountId: string, range: DateRange
   });
 }
 
-type ScopedLog = Awaited<ReturnType<typeof getScopedActivityLogs>>[number];
+export type ScopedLog = Awaited<ReturnType<typeof getScopedActivityLogs>>[number];
 
 export function computeKpiTotals(logs: ScopedLog[]) {
   const map = new Map<
@@ -202,6 +202,16 @@ export async function getAllKrasWithKpis() {
 export async function getActiveAccounts() {
   return prisma.account.findMany({
     where: { isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+// The denominator universe for KPI-target coverage calcs: active accounts
+// owned by the currently-scoped CSMs.
+export async function getScopedActiveAccounts(userIds: string[]) {
+  return prisma.account.findMany({
+    where: { isActive: true, csmUserId: { in: userIds } },
+    select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
 }

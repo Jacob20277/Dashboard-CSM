@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { KraBarChart } from "@/components/kra-bar-chart";
 
 function minutesToHours(minutes: number) {
   return Math.round((minutes / 60) * 10) / 10;
@@ -57,10 +56,6 @@ export function DashboardSummary({
   churnedAccountsCount: number;
   churnedAccountsHref?: string;
 }) {
-  const chartData = kraTotals.map((k) => ({
-    kraName: k.kraName,
-    hours: minutesToHours(k.totalMinutes),
-  }));
   const totalMinutes = kraTotals.reduce((sum, k) => sum + k.totalMinutes, 0);
   const totalEntries = kraTotals.reduce((sum, k) => sum + k.entryCount, 0);
 
@@ -110,19 +105,6 @@ export function DashboardSummary({
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Hours by KRA</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {chartData.length > 0 ? (
-            <KraBarChart data={chartData} />
-          ) : (
-            <p className="text-muted-foreground text-sm">No matched activity yet.</p>
-          )}
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
