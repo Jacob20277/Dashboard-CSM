@@ -206,6 +206,13 @@ export async function getActiveAccounts() {
   });
 }
 
+// Deactivating an account means it churned — count is org-wide, not scoped to
+// the selected CSMs, since churn isn't meaningfully split by who's currently
+// looking at the dashboard.
+export async function getChurnedAccountsCount() {
+  return prisma.account.count({ where: { isActive: false } });
+}
+
 export async function getAllAccounts() {
   return prisma.account.findMany({
     orderBy: { name: "asc" },

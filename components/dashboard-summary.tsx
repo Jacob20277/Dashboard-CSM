@@ -45,6 +45,8 @@ export function DashboardSummary({
   flaggedCount,
   flagsHref,
   accountHrefBase,
+  churnedAccountsCount,
+  churnedAccountsHref,
 }: {
   kraTotals: KraTotal[];
   kpiTotals: KpiTotal[];
@@ -52,6 +54,8 @@ export function DashboardSummary({
   flaggedCount: number;
   flagsHref?: string;
   accountHrefBase?: string;
+  churnedAccountsCount: number;
+  churnedAccountsHref?: string;
 }) {
   const chartData = kraTotals.map((k) => ({
     kraName: k.kraName,
@@ -62,7 +66,7 @@ export function DashboardSummary({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-muted-foreground text-sm">Total hours logged</CardTitle>
@@ -88,6 +92,20 @@ export function DashboardSummary({
               </Link>
             ) : (
               flaggedCount
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-muted-foreground text-sm">Churned accounts</CardTitle>
+          </CardHeader>
+          <CardContent className="text-2xl font-semibold">
+            {churnedAccountsHref ? (
+              <Link href={churnedAccountsHref} className="underline">
+                {churnedAccountsCount}
+              </Link>
+            ) : (
+              churnedAccountsCount
             )}
           </CardContent>
         </Card>

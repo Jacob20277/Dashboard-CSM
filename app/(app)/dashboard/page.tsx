@@ -7,6 +7,7 @@ import {
   computeKpiTotals,
   computeKraTotals,
   getActiveCsmMembers,
+  getChurnedAccountsCount,
   getFlaggedLogs,
   getScopedActivityLogs,
   type DashboardScope,
@@ -36,9 +37,10 @@ export default async function DashboardPage({
 
   const scope: DashboardScope = { type: "members", userIds: selectedIds };
 
-  const [logs, csatResponses] = await Promise.all([
+  const [logs, csatResponses, churnedAccountsCount] = await Promise.all([
     getScopedActivityLogs(scope),
     getCsatResponses(scope),
+    getChurnedAccountsCount(),
   ]);
   const kraTotals = computeKraTotals(logs);
   const kpiTotals = computeKpiTotals(logs);
@@ -69,6 +71,8 @@ export default async function DashboardPage({
         flaggedCount={flaggedCount}
         flagsHref="/dashboard/flags"
         accountHrefBase="/dashboard/accounts"
+        churnedAccountsCount={churnedAccountsCount}
+        churnedAccountsHref={user.role === "ADMIN" ? "/admin/accounts" : undefined}
       />
     </div>
   );
