@@ -7,6 +7,19 @@ import { accountSchema } from "@/lib/validation";
 
 export type AccountFormState = { error?: string };
 
+// ADMIN is a privilege, not a CSM — never let it be saved as an account owner.
+async function resolveCsmUserId(csmUserIdRaw: string | null): Promise<string | null> {
+  if (!csmUserIdRaw) return null;
+  return (
+    (
+      await prisma.user.findFirst({
+        where: { id: csmUserIdRaw, role: "MEMBER" },
+        select: { id: true },
+      })
+    )?.id ?? null
+  );
+}
+
 export async function createAccountAction(
   _prev: AccountFormState,
   formData: FormData
@@ -15,18 +28,22 @@ export async function createAccountAction(
 
   const parsed = accountSchema.safeParse({
     name: formData.get("name"),
+    csmUserId: formData.get("csmUserId"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
+  const csmUserId = await resolveCsmUserId(parsed.data.csmUserId?.trim() || null);
+
   try {
-    await prisma.account.create({ data: parsed.data });
+    await prisma.account.create({ data: { name: parsed.data.name, csmUserId } });
   } catch {
     return { error: "An account with that name already exists." };
   }
 
   revalidatePath("/admin/accounts");
+  revalidatePath("/log");
   return {};
 }
 
@@ -35,19 +52,9 @@ export async function updateAccountAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const isActive = formData.get("isActive") === "on";
-  const csmUserIdRaw = String(formData.get("csmUserId") ?? "").trim() || null;
+  const csmUserId = await resolveCsmUserId(String(formData.get("csmUserId") ?? "").trim() || null);
 
   if (!name) return;
-
-  // ADMIN is a privilege, not a CSM — never let it be saved as an account owner.
-  const csmUserId = csmUserIdRaw
-    ? (
-        await prisma.user.findFirst({
-          where: { id: csmUserIdRaw, role: "MEMBER" },
-          select: { id: true },
-        })
-      )?.id ?? null
-    : null;
 
   await prisma.account.update({ where: { id }, data: { name, isActive, csmUserId } });
   revalidatePath("/admin/accounts");

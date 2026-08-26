@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const accountSchema = z.object({
   name: z.string().trim().min(1, "Account name is required"),
+  csmUserId: z.string().trim().optional(),
 });
 
 export const createUserSchema = z.object({

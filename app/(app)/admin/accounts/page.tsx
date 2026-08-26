@@ -24,7 +24,7 @@ export default async function AdminAccountsPage() {
           <CardTitle>Add account</CardTitle>
         </CardHeader>
         <CardContent>
-          <CreateAccountForm />
+          <CreateAccountForm members={members} />
         </CardContent>
       </Card>
 

@@ -8,7 +8,7 @@ import { createAccountAction, type AccountFormState } from "./actions";
 
 const initialState: AccountFormState = {};
 
-export function CreateAccountForm() {
+export function CreateAccountForm({ members }: { members: { id: string; name: string }[] }) {
   const [state, formAction, pending] = useActionState(createAccountAction, initialState);
 
   return (
@@ -16,6 +16,22 @@ export function CreateAccountForm() {
       <div className="space-y-2">
         <Label htmlFor="name">Account name</Label>
         <Input id="name" name="name" required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="csmUserId">CSM (optional)</Label>
+        <select
+          id="csmUserId"
+          name="csmUserId"
+          defaultValue=""
+          className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+        >
+          <option value="">No CSM</option>
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Adding..." : "Add account"}
