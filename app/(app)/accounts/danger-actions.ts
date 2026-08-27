@@ -45,7 +45,7 @@ export async function deleteAllAccountsAction(
     };
   });
 
-  revalidatePath("/admin/accounts");
+  revalidatePath("/accounts");
   revalidatePath("/admin/import");
   revalidatePath("/log");
   revalidatePath("/dashboard");

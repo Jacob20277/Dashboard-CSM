@@ -86,7 +86,7 @@ export default async function DashboardPage({
         flagsHref="/dashboard/flags"
         accountHrefBase="/dashboard/accounts"
         churnedAccountsCount={churnedAccountsCount}
-        churnedAccountsHref={user.role === "ADMIN" ? "/admin/accounts" : undefined}
+        churnedAccountsHref="/accounts"
       >
         <KpiTargetsTable rows={kpiTargetRows} />
       </DashboardSummary>

@@ -30,7 +30,7 @@ export async function importZohoDealsAction(
   }
 
   revalidatePath("/admin/import");
-  revalidatePath("/admin/accounts");
+  revalidatePath("/accounts");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/renewals");
 

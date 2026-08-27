@@ -25,6 +25,6 @@ export async function createAccountQuickAction(
   }
 
   revalidatePath("/log");
-  revalidatePath("/admin/accounts");
+  revalidatePath("/accounts");
   return { success: true };
 }

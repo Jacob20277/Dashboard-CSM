@@ -19,6 +19,8 @@ export function AccountRowForm({
   account,
   renewsAt,
   members,
+  isAdmin,
+  currentUserId,
 }: {
   account: {
     id: string;
@@ -35,11 +37,16 @@ export function AccountRowForm({
   };
   renewsAt: Date | null;
   members: { id: string; name: string }[];
+  isAdmin: boolean;
+  currentUserId: string;
 }) {
   const [deleteState, deleteAction, deletePending] = useActionState(
     deleteAccountAction,
     initialState
   );
+
+  const canEdit = isAdmin || account.csmUserId === currentUserId;
+  const csmName = members.find((m) => m.id === account.csmUserId)?.name ?? "No CSM";
 
   const crmBadges = [
     account.tier,
@@ -50,6 +57,40 @@ export function AccountRowForm({
     renewsAt && `Renews: ${toDateInputValue(renewsAt)}`,
     ...(account.workflowsEnabledList ?? []),
   ].filter((v): v is string => Boolean(v));
+
+  if (!canEdit) {
+    return (
+      <div className="space-y-2">
+        {crmBadges.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {crmBadges.map((label) => (
+              <Badge key={label} variant="outline" className="text-xs font-normal">
+                {label}
+              </Badge>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <span className="font-medium">{account.name}</span>
+          <span className="text-muted-foreground">{csmName}</span>
+          <Badge variant={account.isActive ? "default" : "outline"}>
+            {account.isActive ? "Active" : "Inactive"}
+          </Badge>
+          {account.recoveryPlanNotes && (
+            <span className="text-muted-foreground text-xs">
+              Recovery plan: {account.recoveryPlanNotes}
+            </span>
+          )}
+          <Link
+            href={`/dashboard/accounts/${account.id}`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            View
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -134,15 +175,17 @@ export function AccountRowForm({
         >
           View
         </Link>
-        <Button
-          variant="outline"
-          size="sm"
-          type="submit"
-          formAction={deleteAction}
-          disabled={deletePending}
-        >
-          {deletePending ? "Deleting..." : "Delete"}
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            size="sm"
+            type="submit"
+            formAction={deleteAction}
+            disabled={deletePending}
+          >
+            {deletePending ? "Deleting..." : "Delete"}
+          </Button>
+        )}
       </form>
       {deleteState?.error && <p className="text-sm text-red-600">{deleteState.error}</p>}
     </div>

@@ -15,3 +15,12 @@ export async function requireAdmin() {
   }
   return user;
 }
+
+// Anyone can view every account, but editing is restricted to admins and the
+// account's own assigned CSM.
+export async function requireAccountEditAccess(csmUserId: string | null) {
+  const user = await requireUser();
+  if (user.role === "ADMIN") return user;
+  if (csmUserId && csmUserId === user.id) return user;
+  throw new Error("Forbidden: you can only edit accounts you're the CSM for");
+}

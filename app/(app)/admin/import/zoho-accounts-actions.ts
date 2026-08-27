@@ -30,7 +30,7 @@ export async function importZohoAccountsAction(
   }
 
   revalidatePath("/admin/import");
-  revalidatePath("/admin/accounts");
+  revalidatePath("/accounts");
   revalidatePath("/log");
   revalidatePath("/dashboard");
 

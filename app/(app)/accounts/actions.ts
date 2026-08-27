@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth-guards";
+import { requireAdmin, requireAccountEditAccess } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { accountSchema } from "@/lib/validation";
 
@@ -42,14 +42,17 @@ export async function createAccountAction(
     return { error: "An account with that name already exists." };
   }
 
-  revalidatePath("/admin/accounts");
+  revalidatePath("/accounts");
   revalidatePath("/log");
   return {};
 }
 
 export async function updateAccountAction(formData: FormData) {
-  await requireAdmin();
   const id = String(formData.get("id") ?? "");
+  const existing = await prisma.account.findUnique({ where: { id }, select: { csmUserId: true } });
+  if (!existing) return;
+  await requireAccountEditAccess(existing.csmUserId);
+
   const name = String(formData.get("name") ?? "").trim();
   const isActive = formData.get("isActive") === "on";
   const csmUserId = await resolveCsmUserId(String(formData.get("csmUserId") ?? "").trim() || null);
@@ -63,7 +66,7 @@ export async function updateAccountAction(formData: FormData) {
     where: { id },
     data: { name, isActive, csmUserId, renewalDateOverride, recoveryPlanNotes },
   });
-  revalidatePath("/admin/accounts");
+  revalidatePath("/accounts");
   revalidatePath("/log");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/renewals");
@@ -84,6 +87,6 @@ export async function deleteAccountAction(
   }
 
   await prisma.account.delete({ where: { id } });
-  revalidatePath("/admin/accounts");
+  revalidatePath("/accounts");
   return {};
 }

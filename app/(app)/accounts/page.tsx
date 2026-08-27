@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { getAllAccounts, getCsmMembers } from "@/lib/dashboard-queries";
 import { computeAccountRenewalDate } from "@/lib/kpi-targets";
+import { requireUser } from "@/lib/auth-guards";
 import { AccountRowForm } from "./account-row-form";
 import { CreateAccountForm } from "./create-account-form";
 import { DeleteAllAccountsButton } from "./delete-all-accounts-button";
@@ -21,7 +22,7 @@ import { SearchFilter } from "./search-filter";
 
 const PAGE_SIZE = 50;
 
-export default async function AdminAccountsPage({
+export default async function AccountsPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -33,6 +34,8 @@ export default async function AdminAccountsPage({
     q?: string;
   }>;
 }) {
+  const user = await requireUser();
+  const isAdmin = user.role === "ADMIN";
   const { csm, renewalFrom, renewalTo, active, page: pageParam, q } = await searchParams;
   const [accounts, members] = await Promise.all([getAllAccounts(), getCsmMembers()]);
 
@@ -67,14 +70,16 @@ export default async function AdminAccountsPage({
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">Accounts</h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add account</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CreateAccountForm members={members} />
-        </CardContent>
-      </Card>
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CreateAccountForm members={members} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -111,6 +116,8 @@ export default async function AdminAccountsPage({
                       }}
                       renewsAt={computeAccountRenewalDate(account)}
                       members={members}
+                      isAdmin={isAdmin}
+                      currentUserId={user.id}
                     />
                   </TableCell>
                 </TableRow>
@@ -133,14 +140,16 @@ export default async function AdminAccountsPage({
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/40">
-        <CardHeader>
-          <CardTitle className="text-destructive">Danger zone</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DeleteAllAccountsButton />
-        </CardContent>
-      </Card>
+      {isAdmin && (
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-destructive">Danger zone</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DeleteAllAccountsButton />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

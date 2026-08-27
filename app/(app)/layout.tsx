@@ -23,10 +23,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/log">Log Activity</Link>
             <Link href="/csat-links">CSAT Links</Link>
+            <Link href="/accounts">Accounts</Link>
             {isAdmin && (
               <>
                 <span className="text-muted-foreground">|</span>
-                <Link href="/admin/accounts">Accounts</Link>
                 <Link href="/admin/users">Users</Link>
                 <Link href="/admin/taxonomy">Taxonomy</Link>
                 <Link href="/admin/csat-templates">CSAT Templates</Link>
