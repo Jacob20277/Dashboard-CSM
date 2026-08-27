@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import type { KpiTargetRow } from "@/lib/kpi-targets";
 
 function AttainedBadge({ tracked, attained }: { tracked: boolean; attained: boolean | null }) {
@@ -10,7 +11,11 @@ function AttainedBadge({ tracked, attained }: { tracked: boolean; attained: bool
   if (attained === null) {
     return <Badge variant="outline">No data</Badge>;
   }
-  return attained ? <Badge>Attained</Badge> : <Badge variant="destructive">Not yet</Badge>;
+  return attained ? (
+    <Badge variant="success">Attained</Badge>
+  ) : (
+    <Badge variant="danger">Not yet</Badge>
+  );
 }
 
 export function KpiTargetsTable({ rows }: { rows: KpiTargetRow[] }) {
@@ -40,7 +45,16 @@ export function KpiTargetsTable({ rows }: { rows: KpiTargetRow[] }) {
                     </div>
                   </div>
                   {row.actualText && (
-                    <p className="text-muted-foreground text-xs">{row.actualText}</p>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground text-xs">{row.actualText}</p>
+                      {row.percent != null && (
+                        <ProgressBar
+                          percent={row.percent}
+                          tone={row.attained ? "success" : "danger"}
+                          className="max-w-40"
+                        />
+                      )}
+                    </div>
                   )}
                   {row.guidance && (
                     <p className="text-muted-foreground text-xs">→ {row.guidance}</p>
@@ -67,7 +81,7 @@ export function KpiTargetsTable({ rows }: { rows: KpiTargetRow[] }) {
                                 <span className="text-muted-foreground">{item.note}</span>
                               )}
                               <Badge
-                                variant={item.status === "covered" ? "default" : "outline"}
+                                variant={item.status === "covered" ? "success" : "outline"}
                                 className="text-[10px]"
                               >
                                 {item.status === "covered" ? "✓" : "✗"}

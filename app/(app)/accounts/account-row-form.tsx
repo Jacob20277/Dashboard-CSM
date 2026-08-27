@@ -15,6 +15,13 @@ function toDateInputValue(date: Date | null | undefined): string {
   return new Date(date).toISOString().slice(0, 10);
 }
 
+function healthBadgeVariant(healthStatus: string): "success" | "warning" | "danger" | "outline" {
+  if (healthStatus === "Good") return "success";
+  if (healthStatus === "Average") return "warning";
+  if (healthStatus === "Bad" || healthStatus === "Worse") return "danger";
+  return "outline";
+}
+
 export function AccountRowForm({
   account,
   renewsAt,
@@ -48,24 +55,31 @@ export function AccountRowForm({
   const canEdit = isAdmin || account.csmUserId === currentUserId;
   const csmName = members.find((m) => m.id === account.csmUserId)?.name ?? "No CSM";
 
-  const crmBadges = [
-    account.tier,
-    account.projectStatus,
-    account.healthStatus && `Health: ${account.healthStatus}`,
-    account.annualRecurringRevenue != null &&
-      `ARR: $${Number(account.annualRecurringRevenue).toLocaleString("en-US")}`,
-    renewsAt && `Renews: ${toDateInputValue(renewsAt)}`,
-    ...(account.workflowsEnabledList ?? []),
-  ].filter((v): v is string => Boolean(v));
+  const crmBadges: { label: string; variant: "outline" | "success" | "warning" | "danger" }[] = [
+    account.tier && { label: account.tier, variant: "outline" as const },
+    account.projectStatus && { label: account.projectStatus, variant: "outline" as const },
+    account.healthStatus && {
+      label: `Health: ${account.healthStatus}`,
+      variant: healthBadgeVariant(account.healthStatus),
+    },
+    account.annualRecurringRevenue != null && {
+      label: `ARR: $${Number(account.annualRecurringRevenue).toLocaleString("en-US")}`,
+      variant: "outline" as const,
+    },
+    renewsAt && { label: `Renews: ${toDateInputValue(renewsAt)}`, variant: "outline" as const },
+    ...(account.workflowsEnabledList ?? []).map((w) => ({ label: w, variant: "outline" as const })),
+  ].filter((v): v is { label: string; variant: "outline" | "success" | "warning" | "danger" } =>
+    Boolean(v)
+  );
 
   if (!canEdit) {
     return (
       <div className="space-y-2">
         {crmBadges.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {crmBadges.map((label) => (
-              <Badge key={label} variant="outline" className="text-xs font-normal">
-                {label}
+            {crmBadges.map((badge) => (
+              <Badge key={badge.label} variant={badge.variant} className="text-xs font-normal">
+                {badge.label}
               </Badge>
             ))}
           </div>
@@ -73,7 +87,7 @@ export function AccountRowForm({
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <span className="font-medium">{account.name}</span>
           <span className="text-muted-foreground">{csmName}</span>
-          <Badge variant={account.isActive ? "default" : "outline"}>
+          <Badge variant={account.isActive ? "success" : "outline"}>
             {account.isActive ? "Active" : "Inactive"}
           </Badge>
           {account.recoveryPlanNotes && (
@@ -96,9 +110,9 @@ export function AccountRowForm({
     <div className="space-y-2">
       {crmBadges.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {crmBadges.map((label) => (
-            <Badge key={label} variant="outline" className="text-xs font-normal">
-              {label}
+          {crmBadges.map((badge) => (
+            <Badge key={badge.label} variant={badge.variant} className="text-xs font-normal">
+              {badge.label}
             </Badge>
           ))}
         </div>

@@ -14,29 +14,47 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b">
+      <header className="header-gradient">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <nav className="flex flex-wrap items-center gap-4 text-sm font-medium">
-            <Link href="/dashboard" className="mr-2 flex items-center">
-              <BrandLogo className="h-7 w-auto" />
+          <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-white/90">
+            <Link href="/dashboard" className="mr-2 flex items-center rounded-md bg-white px-2 py-1">
+              <BrandLogo className="h-6 w-auto" />
             </Link>
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/log">Log Activity</Link>
-            <Link href="/csat-links">CSAT Links</Link>
-            <Link href="/accounts">Accounts</Link>
+            <Link href="/dashboard" className="hover:text-white">
+              Dashboard
+            </Link>
+            <Link href="/log" className="hover:text-white">
+              Log Activity
+            </Link>
+            <Link href="/csat-links" className="hover:text-white">
+              CSAT Links
+            </Link>
+            <Link href="/accounts" className="hover:text-white">
+              Accounts
+            </Link>
             {isAdmin && (
               <>
-                <span className="text-muted-foreground">|</span>
-                <Link href="/admin/users">Users</Link>
-                <Link href="/admin/taxonomy">Taxonomy</Link>
-                <Link href="/admin/csat-templates">CSAT Templates</Link>
-                <Link href="/admin/share-links">Share Links</Link>
-                <Link href="/admin/import">Import</Link>
+                <span className="text-white/40">|</span>
+                <Link href="/admin/users" className="hover:text-white">
+                  Users
+                </Link>
+                <Link href="/admin/taxonomy" className="hover:text-white">
+                  Taxonomy
+                </Link>
+                <Link href="/admin/csat-templates" className="hover:text-white">
+                  CSAT Templates
+                </Link>
+                <Link href="/admin/share-links" className="hover:text-white">
+                  Share Links
+                </Link>
+                <Link href="/admin/import" className="hover:text-white">
+                  Import
+                </Link>
               </>
             )}
           </nav>
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground">
+            <span className="text-white/80">
               {session.user.name} ({session.user.role})
             </span>
             <form

@@ -196,6 +196,7 @@ export interface KpiTargetRow {
   targetText: string;
   tracked: boolean;
   attained: boolean | null;
+  percent?: number;
   actualText: string;
   guidance: string | null;
   href?: string;
@@ -240,6 +241,7 @@ function computeCoverage(target: CoverageTarget, logs: ScopedLog[], accounts: Sc
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${percent}% (${coveredCount} of ${accounts.length} accounts)`,
     guidance: attained ? null : listMissing(accounts, coveredIds),
     details: accounts.map((a) => ({
@@ -278,6 +280,7 @@ function computeConversionRate(
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${percent}% (${convertedCount} of ${opportunityAccounts.length} opportunities)`,
     guidance: attained ? null : listMissing(opportunityAccounts, convertedIds),
     details: opportunityAccounts.map((a) => ({
@@ -334,6 +337,7 @@ function computeCsat(target: CsatTarget, csatResponses: CsatResponseRow[]): KpiT
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${percent}% (avg ${overallAvg.toFixed(1)}/5 across ${byAccount.size} accounts)`,
     guidance,
     details: [...byAccount.entries()].map(([, entry]) => {
@@ -444,6 +448,7 @@ function computeRenewalRate(target: RenewalRateTarget, accounts: ScopedActiveAcc
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${percent}% (${renewed} renewed of ${total} closed renewal deals)`,
     guidance: attained ? null : `${churned} churned`,
     details,
@@ -518,6 +523,7 @@ function computeRenewalPlanning(target: RenewalPlanningTarget, accounts: ScopedA
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${percent}% (${started.length} of ${upcoming.length} upcoming renewals have outreach started)`,
     guidance: attained ? null : `Needs outreach: ${shown.join(", ")}${rest > 0 ? ` +${rest} more` : ""}`,
     href: "/dashboard/renewals",
@@ -564,6 +570,7 @@ function computeChurnRisk(target: ChurnRiskTarget, accounts: ScopedActiveAccount
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${flagged.length} accounts flagged at risk — ${percent}% have a recovery plan documented`,
     guidance: attained ? null : `Needs a recovery plan: ${shown.join(", ")}${rest > 0 ? ` +${rest} more` : ""}`,
     details: flagged.map((a) => {
@@ -594,6 +601,7 @@ function computeProductAdoption(target: ProductAdoptionTarget, accounts: ScopedA
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${percent}% (${adopting.length} of ${accounts.length} accounts)`,
     guidance: attained ? null : listMissing(accounts, coveredIds),
     details: accounts.map((a) => ({
@@ -635,6 +643,7 @@ function computeUpsellIdentify(
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${percent}% (${coveredCount} of ${accounts.length} accounts)`,
     guidance: attained ? null : listMissing(accounts, coveredIds),
     details: accounts.map((a) => ({
@@ -679,6 +688,7 @@ function computeUpsellConvert(
     targetText: target.targetText,
     tracked: true,
     attained,
+    percent,
     actualText: `${percent}% (${convertedCount} of ${identifiedAccounts.length} opportunities)`,
     guidance: attained ? null : listMissing(identifiedAccounts, convertedIds),
     details: identifiedAccounts.map((a) => ({
