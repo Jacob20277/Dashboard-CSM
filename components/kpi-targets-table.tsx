@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { KpiTargetRow } from "@/lib/kpi-targets";
@@ -43,6 +44,11 @@ export function KpiTargetsTable({ rows }: { rows: KpiTargetRow[] }) {
                   )}
                   {row.guidance && (
                     <p className="text-muted-foreground text-xs">→ {row.guidance}</p>
+                  )}
+                  {row.href && (
+                    <Link href={row.href} className="text-primary text-xs underline underline-offset-2">
+                      View upcoming renewals
+                    </Link>
                   )}
                 </div>
               ))}

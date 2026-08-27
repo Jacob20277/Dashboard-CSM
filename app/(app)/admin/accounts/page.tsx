@@ -43,7 +43,16 @@ export default async function AdminAccountsPage() {
               {accounts.map((account) => (
                 <TableRow key={account.id}>
                   <TableCell>
-                    <AccountRowForm account={account} members={members} />
+                    <AccountRowForm
+                      account={{
+                        ...account,
+                        annualRecurringRevenue:
+                          account.annualRecurringRevenue == null
+                            ? null
+                            : Number(account.annualRecurringRevenue),
+                      }}
+                      members={members}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

@@ -53,12 +53,20 @@ export async function updateAccountAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const isActive = formData.get("isActive") === "on";
   const csmUserId = await resolveCsmUserId(String(formData.get("csmUserId") ?? "").trim() || null);
+  const renewalDateOverrideRaw = String(formData.get("renewalDateOverride") ?? "").trim();
+  const renewalDateOverride = renewalDateOverrideRaw ? new Date(renewalDateOverrideRaw) : null;
+  const recoveryPlanNotes = String(formData.get("recoveryPlanNotes") ?? "").trim() || null;
 
   if (!name) return;
 
-  await prisma.account.update({ where: { id }, data: { name, isActive, csmUserId } });
+  await prisma.account.update({
+    where: { id },
+    data: { name, isActive, csmUserId, renewalDateOverride, recoveryPlanNotes },
+  });
   revalidatePath("/admin/accounts");
   revalidatePath("/log");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/renewals");
 }
 
 export async function deleteAccountAction(

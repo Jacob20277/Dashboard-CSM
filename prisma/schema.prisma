@@ -33,18 +33,56 @@ model User {
 }
 
 model Account {
-  id            String         @id @default(cuid())
-  name          String         @unique
-  isActive      Boolean        @default(true)
-  csmUserId     String?
-  csm           User?          @relation("AccountCsm", fields: [csmUserId], references: [id])
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  activityLogs  ActivityLog[]
-  csatLinks     CsatLink[]
-  csatResponses CsatResponse[]
+  id                     String         @id @default(cuid())
+  name                   String         @unique
+  zohoAccountId          String?        @unique
+  isActive               Boolean        @default(true)
+  csmUserId              String?
+  csm                    User?          @relation("AccountCsm", fields: [csmUserId], references: [id])
+  industry               String?
+  phone                  String?
+  website                String?
+  annualRecurringRevenue Decimal?       @db.Decimal(14, 2)
+  tier                   String?
+  projectStatus          String?
+  healthStatus           String?
+  healthBucket           String?
+  churnNote              String?
+  churnReason            String?
+  workflowsEnabledCount  Int?
+  workflowsEnabledList   String[]       @default([])
+  recoveryPlanNotes      String?
+  renewalDateOverride    DateTime?      @db.Date
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  activityLogs           ActivityLog[]
+  csatLinks              CsatLink[]
+  csatResponses          CsatResponse[]
+  deals                  CrmDeal[]
 
   @@index([csmUserId])
+}
+
+model CrmDeal {
+  id            String    @id @default(cuid())
+  accountId     String
+  account       Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  zohoRecordId  String    @unique
+  name          String
+  pipeline      String
+  stage         String
+  dealType      String?
+  renewalStatus String?
+  renewalType   String?
+  renewalDate   DateTime? @db.Date
+  isRenewal     Boolean   @default(false)
+  amount        Decimal?  @db.Decimal(14, 2)
+  closingDate   DateTime? @db.Date
+  renewalOutreachAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([accountId])
 }
 
 model Kra {

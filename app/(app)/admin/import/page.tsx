@@ -12,6 +12,8 @@ import { getAllAccounts } from "@/lib/dashboard-queries";
 import { prisma } from "@/lib/prisma";
 import { ImportForm } from "./import-form";
 import { ImportAccountsForm } from "./import-accounts-form";
+import { ZohoAccountsImportForm } from "./zoho-accounts-import-form";
+import { ZohoDealsImportForm } from "./zoho-deals-import-form";
 import { OrphanedLogRow } from "./orphaned-log-row";
 
 export default async function AdminImportPage() {
@@ -26,6 +28,58 @@ export default async function AdminImportPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">Import</h1>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sync Zoho Accounts</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-muted-foreground space-y-2 text-sm">
+            <p>
+              Upload the raw Zoho CRM &quot;Accounts&quot; module export (CSV or Excel) — no need to
+              edit columns first. Matches by Zoho&apos;s own Record Id, so uploading the same or a
+              refreshed export always updates the same accounts in place; it never touches activity
+              logs or deletes anything.
+            </p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>Creates an account the first time a Record Id is seen, updates it after that.</li>
+              <li>
+                Imports CSM/PAM, industry, phone, website, ARR, tier, project status, health
+                status/bucket, churn notes, and the 6 workflow-enabled feature flags.
+              </li>
+              <li>
+                Active/inactive is derived from Project Status (Churned, Onboarding Slippage, and
+                On Hold become inactive; everything else, including blank, is active).
+              </li>
+              <li>Blank or unrecognized CSM/PAM leaves the account&apos;s current CSM untouched.</li>
+            </ul>
+          </div>
+          <ZohoAccountsImportForm />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sync Zoho Deals</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-muted-foreground space-y-2 text-sm">
+            <p>
+              Upload the raw Zoho CRM &quot;Deals&quot; module export. Matches each deal to its
+              account via Zoho&apos;s own account-record link, and upserts by Deal Record Id, so
+              re-uploading is always safe.
+            </p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>Deals whose account isn&apos;t in the app yet are skipped (counted, not failed).</li>
+              <li>
+                Feeds renewal rate, the 90-day renewal planning list, and upsell identification/
+                conversion on the dashboard.
+              </li>
+            </ul>
+          </div>
+          <ZohoDealsImportForm />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -207,14 +207,38 @@ export async function getActiveAccounts() {
 }
 
 // The denominator universe for KPI-target coverage calcs: active accounts
-// owned by the currently-scoped CSMs.
+// owned by the currently-scoped CSMs, including the CRM fields kpi-targets.ts
+// needs for renewal/churn/adoption/upsell calculations.
 export async function getScopedActiveAccounts(userIds: string[]) {
   return prisma.account.findMany({
     where: { isActive: true, csmUserId: { in: userIds } },
-    select: { id: true, name: true },
+    select: {
+      id: true,
+      name: true,
+      healthStatus: true,
+      workflowsEnabledCount: true,
+      renewalDateOverride: true,
+      recoveryPlanNotes: true,
+      csm: { select: { name: true } },
+      deals: {
+        select: {
+          id: true,
+          pipeline: true,
+          stage: true,
+          dealType: true,
+          renewalStatus: true,
+          renewalDate: true,
+          closingDate: true,
+          renewalOutreachAt: true,
+        },
+        orderBy: { closingDate: "desc" },
+      },
+    },
     orderBy: { name: "asc" },
   });
 }
+
+export type ScopedActiveAccount = Awaited<ReturnType<typeof getScopedActiveAccounts>>[number];
 
 // Deactivating an account means it churned — count is org-wide, not scoped to
 // the selected CSMs, since churn isn't meaningfully split by who's currently

@@ -2,17 +2,36 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { deleteAccountAction, updateAccountAction, type AccountFormState } from "./actions";
 
 const initialState: AccountFormState = {};
+
+function toDateInputValue(date: Date | null | undefined): string {
+  if (!date) return "";
+  return new Date(date).toISOString().slice(0, 10);
+}
 
 export function AccountRowForm({
   account,
   members,
 }: {
-  account: { id: string; name: string; isActive: boolean; csmUserId?: string | null };
+  account: {
+    id: string;
+    name: string;
+    isActive: boolean;
+    csmUserId?: string | null;
+    healthStatus?: string | null;
+    tier?: string | null;
+    projectStatus?: string | null;
+    annualRecurringRevenue?: number | string | null;
+    workflowsEnabledList?: string[];
+    renewalDateOverride?: Date | null;
+    recoveryPlanNotes?: string | null;
+  };
   members: { id: string; name: string }[];
 }) {
   const [deleteState, deleteAction, deletePending] = useActionState(
@@ -20,12 +39,30 @@ export function AccountRowForm({
     initialState
   );
 
+  const crmBadges = [
+    account.tier,
+    account.projectStatus,
+    account.healthStatus && `Health: ${account.healthStatus}`,
+    account.annualRecurringRevenue != null &&
+      `ARR: $${Number(account.annualRecurringRevenue).toLocaleString("en-US")}`,
+    ...(account.workflowsEnabledList ?? []),
+  ].filter((v): v is string => Boolean(v));
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
+      {crmBadges.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {crmBadges.map((label) => (
+            <Badge key={label} variant="outline" className="text-xs font-normal">
+              {label}
+            </Badge>
+          ))}
+        </div>
+      )}
       <form
-        key={`${account.name}-${account.csmUserId ?? ""}-${account.isActive}`}
+        key={`${account.name}-${account.csmUserId ?? ""}-${account.isActive}-${toDateInputValue(account.renewalDateOverride)}-${account.recoveryPlanNotes ?? ""}`}
         action={updateAccountAction}
-        className="flex flex-wrap items-center gap-3"
+        className="flex flex-wrap items-end gap-3"
       >
         <input type="hidden" name="id" value={account.id} />
         <Input name="name" defaultValue={account.name} className="h-8 max-w-xs" required />
@@ -41,7 +78,7 @@ export function AccountRowForm({
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex h-8 items-center gap-2 text-sm">
           <input
             type="checkbox"
             name="isActive"
@@ -50,6 +87,29 @@ export function AccountRowForm({
           />
           Active
         </label>
+        <div className="space-y-1">
+          <Label htmlFor={`renewal-${account.id}`} className="text-muted-foreground text-xs">
+            Renewal date override
+          </Label>
+          <Input
+            id={`renewal-${account.id}`}
+            name="renewalDateOverride"
+            type="date"
+            defaultValue={toDateInputValue(account.renewalDateOverride)}
+            className="h-8"
+          />
+        </div>
+        <div className="min-w-48 flex-1 space-y-1">
+          <Label htmlFor={`recovery-${account.id}`} className="text-muted-foreground text-xs">
+            Recovery plan notes
+          </Label>
+          <Input
+            id={`recovery-${account.id}`}
+            name="recoveryPlanNotes"
+            defaultValue={account.recoveryPlanNotes ?? ""}
+            className="h-8"
+          />
+        </div>
         <Button variant="outline" size="sm" type="submit">
           Save
         </Button>

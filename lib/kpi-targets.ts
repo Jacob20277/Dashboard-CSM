@@ -1,4 +1,4 @@
-import type { ScopedLog } from "@/lib/dashboard-queries";
+import type { ScopedLog, ScopedActiveAccount } from "@/lib/dashboard-queries";
 import { computeResponseAverage, type CsatResponseRow } from "@/lib/csat-queries";
 
 type CoverageTarget = {
@@ -32,7 +32,64 @@ type UntrackedTarget = {
   reason: string;
 };
 
-type KpiTarget = CoverageTarget | ConversionTarget | CsatTarget | UntrackedTarget;
+type RenewalRateTarget = {
+  kraName: string;
+  targetText: string;
+  kind: "renewal-rate";
+  minPercent: number;
+};
+
+type RenewalPlanningTarget = {
+  kraName: string;
+  targetText: string;
+  kind: "renewal-planning";
+  windowDays: number;
+  minPercent: number;
+};
+
+type ChurnRiskTarget = {
+  kraName: string;
+  targetText: string;
+  kind: "churn-risk";
+  minPercent: number;
+};
+
+type ProductAdoptionTarget = {
+  kraName: string;
+  targetText: string;
+  kind: "product-adoption";
+  minWorkflows: number;
+  minPercent: number;
+};
+
+type UpsellIdentifyTarget = {
+  kraName: string;
+  targetText: string;
+  kind: "upsell-identify";
+  kpiName: string;
+  minPercent: number;
+};
+
+type UpsellConvertTarget = {
+  kraName: string;
+  targetText: string;
+  kind: "upsell-convert";
+  kpiName: string;
+  denominatorKpiName: string;
+  minPercent: number;
+};
+
+type KpiTarget =
+  | CoverageTarget
+  | ConversionTarget
+  | CsatTarget
+  | UntrackedTarget
+  | RenewalRateTarget
+  | RenewalPlanningTarget
+  | ChurnRiskTarget
+  | ProductAdoptionTarget
+  | UpsellIdentifyTarget
+  | UpsellConvertTarget;
 
 // Mirrors the KRA/KPI target-tracking sheet. Only targets we actually have
 // data for get a real calculation — everything else is honestly "Not
@@ -41,21 +98,29 @@ export const KPI_TARGETS: KpiTarget[] = [
   {
     kraName: "Retention and Renewals",
     targetText: "90–95% renewal rate. Renewal planning to start 90 days before expiry.",
-    kind: "untracked",
-    reason: "No contract/renewal-date data is tracked in the app.",
+    kind: "renewal-rate",
+    minPercent: 90,
+  },
+  {
+    kraName: "Retention and Renewals",
+    targetText: "Renewal planning to start 90 days before expiry.",
+    kind: "renewal-planning",
+    windowDays: 90,
+    minPercent: 100,
   },
   {
     kraName: "Retention and Renewals",
     targetText:
       "Identify and manage churn risks (low usage, escalations, low engagement). Document recovery plans.",
-    kind: "untracked",
-    reason: "No usage/escalation risk scoring exists — see the Churned accounts count instead.",
+    kind: "churn-risk",
+    minPercent: 100,
   },
   {
     kraName: "Product Adoption",
     targetText: "Each account using at least 2–3 core workflows such as scheduling, job management, reporting.",
-    kind: "untracked",
-    reason: "Workflow usage isn't tracked in the app.",
+    kind: "product-adoption",
+    minWorkflows: 2,
+    minPercent: 100,
   },
   {
     kraName: "Product Adoption",
@@ -81,14 +146,14 @@ export const KPI_TARGETS: KpiTarget[] = [
   {
     kraName: "Upselling",
     targetText: "Identify upsell opportunities in at least 20% of accounts.",
-    kind: "coverage",
+    kind: "upsell-identify",
     kpiName: "Upsell Opportunities",
     minPercent: 20,
   },
   {
     kraName: "Upselling",
     targetText: "Convert 25–30% of identified opportunities.",
-    kind: "conversion-rate",
+    kind: "upsell-convert",
     kpiName: "Upsell Conversion",
     denominatorKpiName: "Upsell Opportunities",
     minPercent: 25,
@@ -127,6 +192,7 @@ export interface KpiTargetRow {
   attained: boolean | null;
   actualText: string;
   guidance: string | null;
+  href?: string;
 }
 
 function accountsTaggedWith(logs: ScopedLog[], kpiName: string): Set<string> {
@@ -143,21 +209,19 @@ function listMissing(accounts: { id: string; name: string }[], coveredIds: Set<s
   return `Missing: ${shown.join(", ")}${rest > 0 ? ` +${rest} more` : ""}`;
 }
 
-function computeCoverage(
-  target: CoverageTarget,
-  logs: ScopedLog[],
-  accounts: { id: string; name: string }[]
-): KpiTargetRow {
-  if (accounts.length === 0) {
-    return {
-      kraName: target.kraName,
-      targetText: target.targetText,
-      tracked: true,
-      attained: null,
-      actualText: "No accounts in scope",
-      guidance: null,
-    };
-  }
+function noAccountsRow(target: { kraName: string; targetText: string }): KpiTargetRow {
+  return {
+    kraName: target.kraName,
+    targetText: target.targetText,
+    tracked: true,
+    attained: null,
+    actualText: "No accounts in scope",
+    guidance: null,
+  };
+}
+
+function computeCoverage(target: CoverageTarget, logs: ScopedLog[], accounts: ScopedActiveAccount[]): KpiTargetRow {
+  if (accounts.length === 0) return noAccountsRow(target);
 
   const coveredIds = accountsTaggedWith(logs, target.kpiName);
   const coveredCount = accounts.filter((a) => coveredIds.has(a.id)).length;
@@ -177,7 +241,7 @@ function computeCoverage(
 function computeConversionRate(
   target: ConversionTarget,
   logs: ScopedLog[],
-  accounts: { id: string; name: string }[]
+  accounts: ScopedActiveAccount[]
 ): KpiTargetRow {
   const opportunityIds = accountsTaggedWith(logs, target.denominatorKpiName);
   const convertedIds = accountsTaggedWith(logs, target.kpiName);
@@ -260,9 +324,280 @@ function computeCsat(target: CsatTarget, csatResponses: CsatResponseRow[]): KpiT
   };
 }
 
+// --- CRM-deal-driven calculations -------------------------------------
+
+type CrmDealLite = ScopedActiveAccount["deals"][number];
+
+const RENEWED_STAGES = new Set(["Renewed", "Auto-renewal"]);
+const CHURNED_STAGES = new Set(["Churned"]);
+
+function isRenewalPipeline(deal: CrmDealLite) {
+  return deal.pipeline === "Renewal Pipeline";
+}
+
+// The account's current renewal cycle: an open (not yet Renewed/Churned)
+// Renewal Pipeline deal if one exists, otherwise the most recently closed
+// one — used as the source of the "current" renewal date / renewal status.
+function currentRenewalDeal(deals: CrmDealLite[]): CrmDealLite | undefined {
+  const renewalDeals = deals.filter(isRenewalPipeline);
+  if (renewalDeals.length === 0) return undefined;
+
+  const open = renewalDeals.filter((d) => !RENEWED_STAGES.has(d.stage) && !CHURNED_STAGES.has(d.stage));
+  if (open.length > 0) {
+    return open.sort((a, b) => {
+      const aTime = (a.renewalDate ?? a.closingDate)?.getTime() ?? Infinity;
+      const bTime = (b.renewalDate ?? b.closingDate)?.getTime() ?? Infinity;
+      return aTime - bTime;
+    })[0];
+  }
+
+  return renewalDeals.sort((a, b) => (b.closingDate?.getTime() ?? 0) - (a.closingDate?.getTime() ?? 0))[0];
+}
+
+function computeRenewalRate(target: RenewalRateTarget, accounts: ScopedActiveAccount[]): KpiTargetRow {
+  let renewed = 0;
+  let churned = 0;
+  for (const account of accounts) {
+    for (const deal of account.deals) {
+      if (!isRenewalPipeline(deal)) continue;
+      if (RENEWED_STAGES.has(deal.stage)) renewed++;
+      else if (CHURNED_STAGES.has(deal.stage)) churned++;
+    }
+  }
+
+  const total = renewed + churned;
+  if (total === 0) {
+    return {
+      kraName: target.kraName,
+      targetText: target.targetText,
+      tracked: true,
+      attained: null,
+      actualText: "No closed renewal outcomes recorded yet",
+      guidance: null,
+    };
+  }
+
+  const percent = Math.round((renewed / total) * 1000) / 10;
+  const attained = percent >= target.minPercent;
+
+  return {
+    kraName: target.kraName,
+    targetText: target.targetText,
+    tracked: true,
+    attained,
+    actualText: `${percent}% (${renewed} renewed of ${total} closed renewal deals)`,
+    guidance: attained ? null : `${churned} churned`,
+  };
+}
+
+export interface UpcomingRenewal {
+  accountId: string;
+  accountName: string;
+  csmName: string | null;
+  renewalDate: Date;
+  dealId: string | null;
+  outreachStarted: boolean;
+  stage: string | null;
+  renewalStatus: string | null;
+}
+
+// Single source of truth for "what's renewing soon" — used by both the
+// dashboard KPI card and the dedicated /dashboard/renewals checklist page.
+export function computeUpcomingRenewals(accounts: ScopedActiveAccount[], windowDays = 90): UpcomingRenewal[] {
+  const now = new Date();
+  const windowEnd = new Date(now.getTime() + windowDays * 24 * 60 * 60 * 1000);
+
+  const results: UpcomingRenewal[] = [];
+  for (const account of accounts) {
+    const deal = currentRenewalDeal(account.deals);
+    const renewalDate = deal?.renewalDate ?? account.renewalDateOverride ?? null;
+    if (!renewalDate) continue;
+    if (renewalDate < now || renewalDate > windowEnd) continue;
+
+    results.push({
+      accountId: account.id,
+      accountName: account.name,
+      csmName: account.csm?.name ?? null,
+      renewalDate,
+      dealId: deal?.id ?? null,
+      outreachStarted: Boolean(deal?.renewalOutreachAt),
+      stage: deal?.stage ?? null,
+      renewalStatus: deal?.renewalStatus ?? null,
+    });
+  }
+
+  return results.sort((a, b) => a.renewalDate.getTime() - b.renewalDate.getTime());
+}
+
+function computeRenewalPlanning(target: RenewalPlanningTarget, accounts: ScopedActiveAccount[]): KpiTargetRow {
+  const upcoming = computeUpcomingRenewals(accounts, target.windowDays);
+  if (upcoming.length === 0) {
+    return {
+      kraName: target.kraName,
+      targetText: target.targetText,
+      tracked: true,
+      attained: null,
+      actualText: "No renewals due in the next 90 days",
+      guidance: null,
+      href: "/dashboard/renewals",
+    };
+  }
+
+  const started = upcoming.filter((u) => u.outreachStarted);
+  const percent = Math.round((started.length / upcoming.length) * 1000) / 10;
+  const attained = percent >= target.minPercent;
+  const notStarted = upcoming.filter((u) => !u.outreachStarted);
+  const shown = notStarted.slice(0, 8).map((u) => u.accountName);
+  const rest = notStarted.length - shown.length;
+
+  return {
+    kraName: target.kraName,
+    targetText: target.targetText,
+    tracked: true,
+    attained,
+    actualText: `${percent}% (${started.length} of ${upcoming.length} upcoming renewals have outreach started)`,
+    guidance: attained ? null : `Needs outreach: ${shown.join(", ")}${rest > 0 ? ` +${rest} more` : ""}`,
+    href: "/dashboard/renewals",
+  };
+}
+
+function isFlaggedAtRisk(account: ScopedActiveAccount): boolean {
+  if (account.healthStatus === "Bad" || account.healthStatus === "Worse") return true;
+  const deal = currentRenewalDeal(account.deals);
+  return deal?.renewalStatus === "At Risk" || deal?.renewalStatus === "Churn";
+}
+
+function hasRecoveryPlan(account: ScopedActiveAccount): boolean {
+  return Boolean(account.recoveryPlanNotes && account.recoveryPlanNotes.trim().length > 0);
+}
+
+function computeChurnRisk(target: ChurnRiskTarget, accounts: ScopedActiveAccount[]): KpiTargetRow {
+  const flagged = accounts.filter(isFlaggedAtRisk);
+  if (flagged.length === 0) {
+    return {
+      kraName: target.kraName,
+      targetText: target.targetText,
+      tracked: true,
+      attained: null,
+      actualText: "No accounts currently flagged at risk",
+      guidance: null,
+    };
+  }
+
+  const withPlan = flagged.filter(hasRecoveryPlan);
+  const percent = Math.round((withPlan.length / flagged.length) * 1000) / 10;
+  const attained = percent >= target.minPercent;
+  const missing = flagged.filter((a) => !hasRecoveryPlan(a));
+  const shown = missing.slice(0, 8).map((a) => a.name);
+  const rest = missing.length - shown.length;
+
+  return {
+    kraName: target.kraName,
+    targetText: target.targetText,
+    tracked: true,
+    attained,
+    actualText: `${flagged.length} accounts flagged at risk — ${percent}% have a recovery plan documented`,
+    guidance: attained ? null : `Needs a recovery plan: ${shown.join(", ")}${rest > 0 ? ` +${rest} more` : ""}`,
+  };
+}
+
+function computeProductAdoption(target: ProductAdoptionTarget, accounts: ScopedActiveAccount[]): KpiTargetRow {
+  if (accounts.length === 0) return noAccountsRow(target);
+
+  const adopting = accounts.filter((a) => (a.workflowsEnabledCount ?? 0) >= target.minWorkflows);
+  const percent = Math.round((adopting.length / accounts.length) * 1000) / 10;
+  const attained = percent >= target.minPercent;
+  const coveredIds = new Set(adopting.map((a) => a.id));
+
+  return {
+    kraName: target.kraName,
+    targetText: target.targetText,
+    tracked: true,
+    attained,
+    actualText: `${percent}% (${adopting.length} of ${accounts.length} accounts)`,
+    guidance: attained ? null : listMissing(accounts, coveredIds),
+  };
+}
+
+function dealAccountIds(accounts: ScopedActiveAccount[], predicate: (deal: CrmDealLite) => boolean): Set<string> {
+  const ids = new Set<string>();
+  for (const account of accounts) {
+    if (account.deals.some(predicate)) ids.add(account.id);
+  }
+  return ids;
+}
+
+const isExpansionDeal = (deal: CrmDealLite) => deal.dealType === "Expansion";
+const isWonExpansionDeal = (deal: CrmDealLite) => deal.dealType === "Expansion" && deal.stage === "Closed/Won";
+
+function computeUpsellIdentify(
+  target: UpsellIdentifyTarget,
+  logs: ScopedLog[],
+  accounts: ScopedActiveAccount[]
+): KpiTargetRow {
+  if (accounts.length === 0) return noAccountsRow(target);
+
+  const coveredIds = new Set([
+    ...accountsTaggedWith(logs, target.kpiName),
+    ...dealAccountIds(accounts, isExpansionDeal),
+  ]);
+  const coveredCount = accounts.filter((a) => coveredIds.has(a.id)).length;
+  const percent = Math.round((coveredCount / accounts.length) * 1000) / 10;
+  const attained = percent >= target.minPercent;
+
+  return {
+    kraName: target.kraName,
+    targetText: target.targetText,
+    tracked: true,
+    attained,
+    actualText: `${percent}% (${coveredCount} of ${accounts.length} accounts)`,
+    guidance: attained ? null : listMissing(accounts, coveredIds),
+  };
+}
+
+function computeUpsellConvert(
+  target: UpsellConvertTarget,
+  logs: ScopedLog[],
+  accounts: ScopedActiveAccount[]
+): KpiTargetRow {
+  const identifiedIds = new Set([
+    ...accountsTaggedWith(logs, target.denominatorKpiName),
+    ...dealAccountIds(accounts, isExpansionDeal),
+  ]);
+  const identifiedAccounts = accounts.filter((a) => identifiedIds.has(a.id));
+
+  if (identifiedAccounts.length === 0) {
+    return {
+      kraName: target.kraName,
+      targetText: target.targetText,
+      tracked: true,
+      attained: null,
+      actualText: "No identified opportunities yet",
+      guidance: null,
+    };
+  }
+
+  const convertedIds = new Set([
+    ...accountsTaggedWith(logs, target.kpiName),
+    ...dealAccountIds(accounts, isWonExpansionDeal),
+  ]);
+  const convertedCount = identifiedAccounts.filter((a) => convertedIds.has(a.id)).length;
+  const percent = Math.round((convertedCount / identifiedAccounts.length) * 1000) / 10;
+  const attained = percent >= target.minPercent;
+
+  return {
+    kraName: target.kraName,
+    targetText: target.targetText,
+    tracked: true,
+    attained,
+    actualText: `${percent}% (${convertedCount} of ${identifiedAccounts.length} opportunities)`,
+    guidance: attained ? null : listMissing(identifiedAccounts, convertedIds),
+  };
+}
+
 export function computeKpiTargets(
   logs: ScopedLog[],
-  scopedActiveAccounts: { id: string; name: string }[],
+  scopedActiveAccounts: ScopedActiveAccount[],
   csatResponses: CsatResponseRow[]
 ): KpiTargetRow[] {
   return KPI_TARGETS.map((target) => {
@@ -273,6 +608,18 @@ export function computeKpiTargets(
         return computeConversionRate(target, logs, scopedActiveAccounts);
       case "csat":
         return computeCsat(target, csatResponses);
+      case "renewal-rate":
+        return computeRenewalRate(target, scopedActiveAccounts);
+      case "renewal-planning":
+        return computeRenewalPlanning(target, scopedActiveAccounts);
+      case "churn-risk":
+        return computeChurnRisk(target, scopedActiveAccounts);
+      case "product-adoption":
+        return computeProductAdoption(target, scopedActiveAccounts);
+      case "upsell-identify":
+        return computeUpsellIdentify(target, logs, scopedActiveAccounts);
+      case "upsell-convert":
+        return computeUpsellConvert(target, logs, scopedActiveAccounts);
       case "untracked":
         return {
           kraName: target.kraName,
