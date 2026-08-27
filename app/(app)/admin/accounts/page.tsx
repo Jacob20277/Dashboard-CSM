@@ -12,9 +12,36 @@ import { computeAccountRenewalDate } from "@/lib/kpi-targets";
 import { AccountRowForm } from "./account-row-form";
 import { CreateAccountForm } from "./create-account-form";
 import { DeleteAllAccountsButton } from "./delete-all-accounts-button";
+import { CsmFilter } from "./csm-filter";
+import { NO_CSM_VALUE } from "./csm-filter-constants";
+import { RenewalDateFilter } from "./renewal-date-filter";
 
-export default async function AdminAccountsPage() {
+export default async function AdminAccountsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ csm?: string; renewalFrom?: string; renewalTo?: string }>;
+}) {
+  const { csm, renewalFrom, renewalTo } = await searchParams;
   const [accounts, members] = await Promise.all([getAllAccounts(), getCsmMembers()]);
+
+  const selectedCsmIds = (csm ?? "").split(",").filter(Boolean);
+  const renewalFromDate = renewalFrom ? new Date(`${renewalFrom}T00:00:00.000Z`) : null;
+  const renewalToDate = renewalTo ? new Date(`${renewalTo}T23:59:59.999Z`) : null;
+  const hasDateFilter = Boolean(renewalFromDate || renewalToDate);
+
+  const filteredAccounts = accounts.filter((account) => {
+    if (selectedCsmIds.length > 0) {
+      const matchesCsm = selectedCsmIds.includes(account.csmUserId ?? NO_CSM_VALUE);
+      if (!matchesCsm) return false;
+    }
+    if (hasDateFilter) {
+      const renewsAt = computeAccountRenewalDate(account);
+      if (!renewsAt) return false;
+      if (renewalFromDate && renewsAt < renewalFromDate) return false;
+      if (renewalToDate && renewsAt > renewalToDate) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -31,7 +58,15 @@ export default async function AdminAccountsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All accounts</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>
+              All accounts ({filteredAccounts.length} of {accounts.length})
+            </CardTitle>
+            <div className="flex flex-wrap items-center gap-3">
+              <CsmFilter members={members} />
+              <RenewalDateFilter />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -41,7 +76,7 @@ export default async function AdminAccountsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {accounts.map((account) => (
+              {filteredAccounts.map((account) => (
                 <TableRow key={account.id} className="border-b-4 border-border">
                   <TableCell className="py-4">
                     <AccountRowForm
@@ -58,9 +93,11 @@ export default async function AdminAccountsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {accounts.length === 0 && (
+              {filteredAccounts.length === 0 && (
                 <TableRow>
-                  <TableCell className="text-muted-foreground">No accounts yet.</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {accounts.length === 0 ? "No accounts yet." : "No accounts match these filters."}
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
