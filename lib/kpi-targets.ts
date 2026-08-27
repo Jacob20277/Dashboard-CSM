@@ -185,6 +185,12 @@ export const KPI_TARGETS: KpiTarget[] = [
   },
 ];
 
+export interface KpiDetailItem {
+  name: string;
+  status: "covered" | "missing";
+  note?: string;
+}
+
 export interface KpiTargetRow {
   kraName: string;
   targetText: string;
@@ -193,6 +199,7 @@ export interface KpiTargetRow {
   actualText: string;
   guidance: string | null;
   href?: string;
+  details?: KpiDetailItem[];
 }
 
 function accountsTaggedWith(logs: ScopedLog[], kpiName: string): Set<string> {
@@ -235,6 +242,10 @@ function computeCoverage(target: CoverageTarget, logs: ScopedLog[], accounts: Sc
     attained,
     actualText: `${percent}% (${coveredCount} of ${accounts.length} accounts)`,
     guidance: attained ? null : listMissing(accounts, coveredIds),
+    details: accounts.map((a) => ({
+      name: a.name,
+      status: coveredIds.has(a.id) ? "covered" : "missing",
+    })),
   };
 }
 
@@ -269,6 +280,10 @@ function computeConversionRate(
     attained,
     actualText: `${percent}% (${convertedCount} of ${opportunityAccounts.length} opportunities)`,
     guidance: attained ? null : listMissing(opportunityAccounts, convertedIds),
+    details: opportunityAccounts.map((a) => ({
+      name: a.name,
+      status: convertedIds.has(a.id) ? "covered" : "missing",
+    })),
   };
 }
 
@@ -321,6 +336,14 @@ function computeCsat(target: CsatTarget, csatResponses: CsatResponseRow[]): KpiT
     attained,
     actualText: `${percent}% (avg ${overallAvg.toFixed(1)}/5 across ${byAccount.size} accounts)`,
     guidance,
+    details: [...byAccount.entries()].map(([, entry]) => {
+      const avg = entry.scores.reduce((sum, v) => sum + v, 0) / entry.scores.length;
+      return {
+        name: entry.name,
+        status: (avg / 5) * 100 >= target.minPercent ? "covered" : "missing",
+        note: `avg ${avg.toFixed(1)}/5`,
+      } as KpiDetailItem;
+    }),
   };
 }
 
@@ -353,6 +376,17 @@ function openRenewalDeal(deals: CrmDealLite[]): CrmDealLite | undefined {
   })[0];
 }
 
+// The account's effective renewal date: Zoho's explicit Renewal Date if set,
+// else the open renewal deal's Closing Date (populated on almost every deal,
+// including auto-created renewal-cycle ones), else the manual override.
+export function computeAccountRenewalDate(account: {
+  deals: CrmDealLite[];
+  renewalDateOverride: Date | null;
+}): Date | null {
+  const deal = openRenewalDeal(account.deals);
+  return deal?.renewalDate ?? deal?.closingDate ?? account.renewalDateOverride ?? null;
+}
+
 // The account's current renewal cycle for context/risk purposes: the open
 // deal if one exists, otherwise the most recently closed one (so a recent
 // Churn/At-Risk status is still visible even once that deal is closed).
@@ -368,11 +402,25 @@ function currentRenewalDeal(deals: CrmDealLite[]): CrmDealLite | undefined {
 function computeRenewalRate(target: RenewalRateTarget, accounts: ScopedActiveAccount[]): KpiTargetRow {
   let renewed = 0;
   let churned = 0;
+  const details: KpiDetailItem[] = [];
   for (const account of accounts) {
     for (const deal of account.deals) {
       if (!isRenewalPipeline(deal)) continue;
-      if (RENEWED_STAGES.has(deal.stage)) renewed++;
-      else if (CHURNED_STAGES.has(deal.stage)) churned++;
+      if (RENEWED_STAGES.has(deal.stage)) {
+        renewed++;
+        details.push({
+          name: `${account.name} — ${deal.name}`,
+          status: "covered",
+          note: `${deal.stage}${deal.closingDate ? ` · ${deal.closingDate.toISOString().slice(0, 10)}` : ""}`,
+        });
+      } else if (CHURNED_STAGES.has(deal.stage)) {
+        churned++;
+        details.push({
+          name: `${account.name} — ${deal.name}`,
+          status: "missing",
+          note: `${deal.stage}${deal.closingDate ? ` · ${deal.closingDate.toISOString().slice(0, 10)}` : ""}`,
+        });
+      }
     }
   }
 
@@ -398,6 +446,7 @@ function computeRenewalRate(target: RenewalRateTarget, accounts: ScopedActiveAcc
     attained,
     actualText: `${percent}% (${renewed} renewed of ${total} closed renewal deals)`,
     guidance: attained ? null : `${churned} churned`,
+    details,
   };
 }
 
@@ -424,10 +473,7 @@ export function computeUpcomingRenewals(accounts: ScopedActiveAccount[], windowD
     // already-Renewed/Churned deal is a resolved outcome, not something
     // needing outreach.
     const deal = openRenewalDeal(account.deals);
-    // Zoho's explicit Renewal Date is set on very few deals — Closing Date is
-    // populated on almost all of them (including auto-created renewal-cycle
-    // deals) and is the real expected renewal date in practice.
-    const renewalDate = deal?.renewalDate ?? deal?.closingDate ?? account.renewalDateOverride ?? null;
+    const renewalDate = computeAccountRenewalDate(account);
     if (!renewalDate) continue;
     if (renewalDate < now || renewalDate > windowEnd) continue;
 
@@ -475,6 +521,11 @@ function computeRenewalPlanning(target: RenewalPlanningTarget, accounts: ScopedA
     actualText: `${percent}% (${started.length} of ${upcoming.length} upcoming renewals have outreach started)`,
     guidance: attained ? null : `Needs outreach: ${shown.join(", ")}${rest > 0 ? ` +${rest} more` : ""}`,
     href: "/dashboard/renewals",
+    details: upcoming.map((u) => ({
+      name: u.accountName,
+      status: u.outreachStarted ? "covered" : "missing",
+      note: `${u.renewalDate.toISOString().slice(0, 10)}${u.stage ? ` · ${u.stage}` : ""}`,
+    })),
   };
 }
 
@@ -515,6 +566,18 @@ function computeChurnRisk(target: ChurnRiskTarget, accounts: ScopedActiveAccount
     attained,
     actualText: `${flagged.length} accounts flagged at risk — ${percent}% have a recovery plan documented`,
     guidance: attained ? null : `Needs a recovery plan: ${shown.join(", ")}${rest > 0 ? ` +${rest} more` : ""}`,
+    details: flagged.map((a) => {
+      const deal = currentRenewalDeal(a.deals);
+      const noteParts = [
+        a.healthStatus && `Health: ${a.healthStatus}`,
+        deal?.renewalStatus && `Renewal: ${deal.renewalStatus}`,
+      ].filter(Boolean);
+      return {
+        name: a.name,
+        status: hasRecoveryPlan(a) ? "covered" : "missing",
+        note: noteParts.length > 0 ? noteParts.join(" · ") : undefined,
+      } as KpiDetailItem;
+    }),
   };
 }
 
@@ -533,6 +596,11 @@ function computeProductAdoption(target: ProductAdoptionTarget, accounts: ScopedA
     attained,
     actualText: `${percent}% (${adopting.length} of ${accounts.length} accounts)`,
     guidance: attained ? null : listMissing(accounts, coveredIds),
+    details: accounts.map((a) => ({
+      name: a.name,
+      status: coveredIds.has(a.id) ? "covered" : "missing",
+      note: `${a.workflowsEnabledCount ?? 0} workflow${(a.workflowsEnabledCount ?? 0) === 1 ? "" : "s"}`,
+    })),
   };
 }
 
@@ -569,6 +637,10 @@ function computeUpsellIdentify(
     attained,
     actualText: `${percent}% (${coveredCount} of ${accounts.length} accounts)`,
     guidance: attained ? null : listMissing(accounts, coveredIds),
+    details: accounts.map((a) => ({
+      name: a.name,
+      status: coveredIds.has(a.id) ? "covered" : "missing",
+    })),
   };
 }
 
@@ -609,6 +681,10 @@ function computeUpsellConvert(
     attained,
     actualText: `${percent}% (${convertedCount} of ${identifiedAccounts.length} opportunities)`,
     guidance: attained ? null : listMissing(identifiedAccounts, convertedIds),
+    details: identifiedAccounts.map((a) => ({
+      name: a.name,
+      status: convertedIds.has(a.id) ? "covered" : "missing",
+    })),
   };
 }
 

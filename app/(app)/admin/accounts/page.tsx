@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getAllAccounts, getCsmMembers } from "@/lib/dashboard-queries";
+import { computeAccountRenewalDate } from "@/lib/kpi-targets";
 import { AccountRowForm } from "./account-row-form";
 import { CreateAccountForm } from "./create-account-form";
 import { DeleteAllAccountsButton } from "./delete-all-accounts-button";
@@ -51,6 +52,7 @@ export default async function AdminAccountsPage() {
                             ? null
                             : Number(account.annualRecurringRevenue),
                       }}
+                      renewsAt={computeAccountRenewalDate(account)}
                       members={members}
                     />
                   </TableCell>

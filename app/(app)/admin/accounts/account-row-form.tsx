@@ -17,6 +17,7 @@ function toDateInputValue(date: Date | null | undefined): string {
 
 export function AccountRowForm({
   account,
+  renewsAt,
   members,
 }: {
   account: {
@@ -32,6 +33,7 @@ export function AccountRowForm({
     renewalDateOverride?: Date | null;
     recoveryPlanNotes?: string | null;
   };
+  renewsAt: Date | null;
   members: { id: string; name: string }[];
 }) {
   const [deleteState, deleteAction, deletePending] = useActionState(
@@ -45,6 +47,7 @@ export function AccountRowForm({
     account.healthStatus && `Health: ${account.healthStatus}`,
     account.annualRecurringRevenue != null &&
       `ARR: $${Number(account.annualRecurringRevenue).toLocaleString("en-US")}`,
+    renewsAt && `Renews: ${toDateInputValue(renewsAt)}`,
     ...(account.workflowsEnabledList ?? []),
   ].filter((v): v is string => Boolean(v));
 
@@ -87,18 +90,30 @@ export function AccountRowForm({
           />
           Active
         </label>
-        <div className="space-y-1">
-          <Label htmlFor={`renewal-${account.id}`} className="text-muted-foreground text-xs">
-            Renewal date override
-          </Label>
-          <Input
-            id={`renewal-${account.id}`}
+        {renewsAt ? (
+          // A real renewal date already exists (from Zoho or a prior manual
+          // override) and is shown as the "Renews: ..." badge above — keep
+          // the stored override value on submit without exposing an editable
+          // (and currently-unused) input for it.
+          <input
+            type="hidden"
             name="renewalDateOverride"
-            type="date"
-            defaultValue={toDateInputValue(account.renewalDateOverride)}
-            className="h-8"
+            value={toDateInputValue(account.renewalDateOverride)}
           />
-        </div>
+        ) : (
+          <div className="space-y-1">
+            <Label htmlFor={`renewal-${account.id}`} className="text-muted-foreground text-xs">
+              Renewal date override
+            </Label>
+            <Input
+              id={`renewal-${account.id}`}
+              name="renewalDateOverride"
+              type="date"
+              defaultValue={toDateInputValue(account.renewalDateOverride)}
+              className="h-8"
+            />
+          </div>
+        )}
         <div className="min-w-48 flex-1 space-y-1">
           <Label htmlFor={`recovery-${account.id}`} className="text-muted-foreground text-xs">
             Recovery plan notes

@@ -223,6 +223,7 @@ export async function getScopedActiveAccounts(userIds: string[]) {
       deals: {
         select: {
           id: true,
+          name: true,
           pipeline: true,
           stage: true,
           dealType: true,
@@ -250,7 +251,23 @@ export async function getChurnedAccountsCount() {
 export async function getAllAccounts() {
   return prisma.account.findMany({
     orderBy: { name: "asc" },
-    include: { csm: { select: { id: true, name: true } } },
+    include: {
+      csm: { select: { id: true, name: true } },
+      deals: {
+        select: {
+          id: true,
+          name: true,
+          pipeline: true,
+          stage: true,
+          dealType: true,
+          renewalStatus: true,
+          renewalDate: true,
+          closingDate: true,
+          renewalOutreachAt: true,
+        },
+        orderBy: { closingDate: "desc" },
+      },
+    },
   });
 }
 

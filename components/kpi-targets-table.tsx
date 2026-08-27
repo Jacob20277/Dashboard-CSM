@@ -50,6 +50,34 @@ export function KpiTargetsTable({ rows }: { rows: KpiTargetRow[] }) {
                       View upcoming renewals
                     </Link>
                   )}
+                  {row.details && row.details.length > 0 && (
+                    <details className="group">
+                      <summary className="text-primary cursor-pointer text-xs underline underline-offset-2">
+                        View all {row.details.length} {row.details.length === 1 ? "item" : "items"}
+                      </summary>
+                      <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-md border p-2">
+                        {row.details.map((item, i) => (
+                          <li
+                            key={`${item.name}-${i}`}
+                            className="flex items-center justify-between gap-3 text-xs"
+                          >
+                            <span className="min-w-0 truncate">{item.name}</span>
+                            <span className="flex shrink-0 items-center gap-2">
+                              {item.note && (
+                                <span className="text-muted-foreground">{item.note}</span>
+                              )}
+                              <Badge
+                                variant={item.status === "covered" ? "default" : "outline"}
+                                className="text-[10px]"
+                              >
+                                {item.status === "covered" ? "✓" : "✗"}
+                              </Badge>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                 </div>
               ))}
             </div>
