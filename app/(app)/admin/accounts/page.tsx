@@ -16,6 +16,9 @@ import { CsmFilter } from "./csm-filter";
 import { NO_CSM_VALUE } from "./csm-filter-constants";
 import { RenewalDateFilter } from "./renewal-date-filter";
 import { ActiveFilter } from "./active-filter";
+import { AccountsPagination } from "./accounts-pagination";
+
+const PAGE_SIZE = 50;
 
 export default async function AdminAccountsPage({
   searchParams,
@@ -25,9 +28,10 @@ export default async function AdminAccountsPage({
     renewalFrom?: string;
     renewalTo?: string;
     active?: string;
+    page?: string;
   }>;
 }) {
-  const { csm, renewalFrom, renewalTo, active } = await searchParams;
+  const { csm, renewalFrom, renewalTo, active, page: pageParam } = await searchParams;
   const [accounts, members] = await Promise.all([getAllAccounts(), getCsmMembers()]);
 
   const selectedCsmIds = (csm ?? "").split(",").filter(Boolean);
@@ -50,6 +54,10 @@ export default async function AdminAccountsPage({
     }
     return true;
   });
+
+  const pageCount = Math.max(1, Math.ceil(filteredAccounts.length / PAGE_SIZE));
+  const page = Math.min(Math.max(1, Number(pageParam) || 1), pageCount);
+  const pagedAccounts = filteredAccounts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -85,7 +93,7 @@ export default async function AdminAccountsPage({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAccounts.map((account) => (
+              {pagedAccounts.map((account) => (
                 <TableRow key={account.id} className="border-b-4 border-border">
                   <TableCell className="py-4">
                     <AccountRowForm
@@ -111,6 +119,12 @@ export default async function AdminAccountsPage({
               )}
             </TableBody>
           </Table>
+          <AccountsPagination
+            page={page}
+            pageCount={pageCount}
+            totalCount={filteredAccounts.length}
+            currentParams={{ csm, renewalFrom, renewalTo, active }}
+          />
         </CardContent>
       </Card>
 
