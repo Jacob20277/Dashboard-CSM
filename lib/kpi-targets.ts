@@ -335,22 +335,33 @@ function isRenewalPipeline(deal: CrmDealLite) {
   return deal.pipeline === "Renewal Pipeline";
 }
 
-// The account's current renewal cycle: an open (not yet Renewed/Churned)
-// Renewal Pipeline deal if one exists, otherwise the most recently closed
-// one — used as the source of the "current" renewal date / renewal status.
+function openRenewalDeals(deals: CrmDealLite[]): CrmDealLite[] {
+  return deals
+    .filter(isRenewalPipeline)
+    .filter((d) => !RENEWED_STAGES.has(d.stage) && !CHURNED_STAGES.has(d.stage));
+}
+
+// The account's open (not yet Renewed/Churned) renewal cycle, if one exists —
+// i.e. an actual pending renewal, not one that's already been decided.
+function openRenewalDeal(deals: CrmDealLite[]): CrmDealLite | undefined {
+  const open = openRenewalDeals(deals);
+  if (open.length === 0) return undefined;
+  return open.sort((a, b) => {
+    const aTime = (a.renewalDate ?? a.closingDate)?.getTime() ?? Infinity;
+    const bTime = (b.renewalDate ?? b.closingDate)?.getTime() ?? Infinity;
+    return aTime - bTime;
+  })[0];
+}
+
+// The account's current renewal cycle for context/risk purposes: the open
+// deal if one exists, otherwise the most recently closed one (so a recent
+// Churn/At-Risk status is still visible even once that deal is closed).
 function currentRenewalDeal(deals: CrmDealLite[]): CrmDealLite | undefined {
+  const open = openRenewalDeal(deals);
+  if (open) return open;
+
   const renewalDeals = deals.filter(isRenewalPipeline);
   if (renewalDeals.length === 0) return undefined;
-
-  const open = renewalDeals.filter((d) => !RENEWED_STAGES.has(d.stage) && !CHURNED_STAGES.has(d.stage));
-  if (open.length > 0) {
-    return open.sort((a, b) => {
-      const aTime = (a.renewalDate ?? a.closingDate)?.getTime() ?? Infinity;
-      const bTime = (b.renewalDate ?? b.closingDate)?.getTime() ?? Infinity;
-      return aTime - bTime;
-    })[0];
-  }
-
   return renewalDeals.sort((a, b) => (b.closingDate?.getTime() ?? 0) - (a.closingDate?.getTime() ?? 0))[0];
 }
 
@@ -409,8 +420,14 @@ export function computeUpcomingRenewals(accounts: ScopedActiveAccount[], windowD
 
   const results: UpcomingRenewal[] = [];
   for (const account of accounts) {
-    const deal = currentRenewalDeal(account.deals);
-    const renewalDate = deal?.renewalDate ?? account.renewalDateOverride ?? null;
+    // Only an open (undecided) renewal deal counts as "upcoming" — an
+    // already-Renewed/Churned deal is a resolved outcome, not something
+    // needing outreach.
+    const deal = openRenewalDeal(account.deals);
+    // Zoho's explicit Renewal Date is set on very few deals — Closing Date is
+    // populated on almost all of them (including auto-created renewal-cycle
+    // deals) and is the real expected renewal date in practice.
+    const renewalDate = deal?.renewalDate ?? deal?.closingDate ?? account.renewalDateOverride ?? null;
     if (!renewalDate) continue;
     if (renewalDate < now || renewalDate > windowEnd) continue;
 
