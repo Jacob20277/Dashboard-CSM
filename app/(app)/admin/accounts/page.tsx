@@ -41,8 +41,8 @@ export default async function AdminAccountsPage() {
             </TableHeader>
             <TableBody>
               {accounts.map((account) => (
-                <TableRow key={account.id}>
-                  <TableCell>
+                <TableRow key={account.id} className="border-b-4 border-border">
+                  <TableCell className="py-4">
                     <AccountRowForm
                       account={{
                         ...account,
