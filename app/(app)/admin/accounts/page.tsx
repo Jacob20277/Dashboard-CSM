@@ -17,6 +17,7 @@ import { NO_CSM_VALUE } from "./csm-filter-constants";
 import { RenewalDateFilter } from "./renewal-date-filter";
 import { ActiveFilter } from "./active-filter";
 import { AccountsPagination } from "./accounts-pagination";
+import { SearchFilter } from "./search-filter";
 
 const PAGE_SIZE = 50;
 
@@ -29,17 +30,20 @@ export default async function AdminAccountsPage({
     renewalTo?: string;
     active?: string;
     page?: string;
+    q?: string;
   }>;
 }) {
-  const { csm, renewalFrom, renewalTo, active, page: pageParam } = await searchParams;
+  const { csm, renewalFrom, renewalTo, active, page: pageParam, q } = await searchParams;
   const [accounts, members] = await Promise.all([getAllAccounts(), getCsmMembers()]);
 
+  const normalizedQuery = q?.trim().toLowerCase() ?? "";
   const selectedCsmIds = (csm ?? "").split(",").filter(Boolean);
   const renewalFromDate = renewalFrom ? new Date(`${renewalFrom}T00:00:00.000Z`) : null;
   const renewalToDate = renewalTo ? new Date(`${renewalTo}T23:59:59.999Z`) : null;
   const hasDateFilter = Boolean(renewalFromDate || renewalToDate);
 
   const filteredAccounts = accounts.filter((account) => {
+    if (normalizedQuery && !account.name.toLowerCase().includes(normalizedQuery)) return false;
     if (active === "true" && !account.isActive) return false;
     if (active === "false" && account.isActive) return false;
     if (selectedCsmIds.length > 0) {
@@ -79,6 +83,7 @@ export default async function AdminAccountsPage({
               All accounts ({filteredAccounts.length} of {accounts.length})
             </CardTitle>
             <div className="flex flex-wrap items-center gap-3">
+              <SearchFilter />
               <ActiveFilter />
               <CsmFilter members={members} />
               <RenewalDateFilter />
@@ -123,7 +128,7 @@ export default async function AdminAccountsPage({
             page={page}
             pageCount={pageCount}
             totalCount={filteredAccounts.length}
-            currentParams={{ csm, renewalFrom, renewalTo, active }}
+            currentParams={{ csm, renewalFrom, renewalTo, active, q }}
           />
         </CardContent>
       </Card>
