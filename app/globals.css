@@ -165,6 +165,9 @@
   h6 {
     @apply font-heading;
   }
+  h1 {
+    @apply border-primary border-l-4 pl-3;
+  }
 }
 
 .header-gradient {

@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="header-gradient">
+      <header className="header-gradient shadow-md">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-white/90">
             <Link href="/dashboard" className="mr-2 flex items-center rounded-md bg-white px-2 py-1">

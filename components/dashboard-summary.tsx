@@ -1,3 +1,4 @@
+import { CheckCircle2, Clock, Flag, UserX } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,23 +65,32 @@ export function DashboardSummary({
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-t-primary border-t-4">
           <CardHeader>
-            <CardTitle className="text-muted-foreground text-sm">Total hours logged</CardTitle>
+            <CardTitle className="text-muted-foreground flex items-center gap-1.5 text-sm">
+              <Clock className="size-4" />
+              Total hours logged
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">
             {minutesToHours(totalMinutes)}h
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-status-success-fg border-t-4">
           <CardHeader>
-            <CardTitle className="text-muted-foreground text-sm">Matched entries</CardTitle>
+            <CardTitle className="text-muted-foreground flex items-center gap-1.5 text-sm">
+              <CheckCircle2 className="size-4" />
+              Matched entries
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{totalEntries}</CardContent>
         </Card>
-        <Card>
+        <Card className="border-status-warning-fg border-t-4">
           <CardHeader>
-            <CardTitle className="text-muted-foreground text-sm">Flagged / unmatched</CardTitle>
+            <CardTitle className="text-muted-foreground flex items-center gap-1.5 text-sm">
+              <Flag className="size-4" />
+              Flagged / unmatched
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">
             {flagsHref ? (
@@ -92,9 +102,12 @@ export function DashboardSummary({
             )}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-status-danger-fg border-t-4">
           <CardHeader>
-            <CardTitle className="text-muted-foreground text-sm">Churned accounts</CardTitle>
+            <CardTitle className="text-muted-foreground flex items-center gap-1.5 text-sm">
+              <UserX className="size-4" />
+              Churned accounts
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">
             {churnedAccountsHref ? (
