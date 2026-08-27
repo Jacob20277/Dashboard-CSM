@@ -15,13 +15,19 @@ import { DeleteAllAccountsButton } from "./delete-all-accounts-button";
 import { CsmFilter } from "./csm-filter";
 import { NO_CSM_VALUE } from "./csm-filter-constants";
 import { RenewalDateFilter } from "./renewal-date-filter";
+import { ActiveFilter } from "./active-filter";
 
 export default async function AdminAccountsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ csm?: string; renewalFrom?: string; renewalTo?: string }>;
+  searchParams: Promise<{
+    csm?: string;
+    renewalFrom?: string;
+    renewalTo?: string;
+    active?: string;
+  }>;
 }) {
-  const { csm, renewalFrom, renewalTo } = await searchParams;
+  const { csm, renewalFrom, renewalTo, active } = await searchParams;
   const [accounts, members] = await Promise.all([getAllAccounts(), getCsmMembers()]);
 
   const selectedCsmIds = (csm ?? "").split(",").filter(Boolean);
@@ -30,6 +36,8 @@ export default async function AdminAccountsPage({
   const hasDateFilter = Boolean(renewalFromDate || renewalToDate);
 
   const filteredAccounts = accounts.filter((account) => {
+    if (active === "true" && !account.isActive) return false;
+    if (active === "false" && account.isActive) return false;
     if (selectedCsmIds.length > 0) {
       const matchesCsm = selectedCsmIds.includes(account.csmUserId ?? NO_CSM_VALUE);
       if (!matchesCsm) return false;
@@ -63,6 +71,7 @@ export default async function AdminAccountsPage({
               All accounts ({filteredAccounts.length} of {accounts.length})
             </CardTitle>
             <div className="flex flex-wrap items-center gap-3">
+              <ActiveFilter />
               <CsmFilter members={members} />
               <RenewalDateFilter />
             </div>
