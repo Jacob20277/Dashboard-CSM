@@ -16,6 +16,7 @@ const MODELS = [
   "activityLog",
   "pendingActivityImport",
   "activityLogKpi",
+  "crmDeal",
   "shareToken",
   "csatLink",
   "csatLinkQuestion",
