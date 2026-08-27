@@ -11,7 +11,6 @@ import { matchAccountCandidates } from "@/lib/account-match";
 import { getAllAccounts } from "@/lib/dashboard-queries";
 import { prisma } from "@/lib/prisma";
 import { ImportForm } from "./import-form";
-import { ImportAccountsForm } from "./import-accounts-form";
 import { ZohoAccountsImportForm } from "./zoho-accounts-import-form";
 import { ZohoDealsImportForm } from "./zoho-deals-import-form";
 import { OrphanedLogRow } from "./orphaned-log-row";
@@ -78,31 +77,6 @@ export default async function AdminImportPage() {
             </ul>
           </div>
           <ZohoDealsImportForm />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Bulk import accounts &amp; CSM owners</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-muted-foreground space-y-2 text-sm">
-            <p>Upload a CSV or Excel file with a header row and these columns, in any order:</p>
-            <p className="rounded-md border bg-muted/40 p-2 font-mono text-xs">
-              Account Name, CSM
-            </p>
-            <ul className="list-disc space-y-1 pl-5">
-              <li>
-                <strong>Account Name</strong>: creates the account if it doesn&apos;t exist yet,
-                or updates its CSM if it does (matched case-insensitively).
-              </li>
-              <li>
-                <strong>CSM</strong>: the member&apos;s email or exact name. Leave blank to clear
-                the CSM for that account.
-              </li>
-            </ul>
-          </div>
-          <ImportAccountsForm />
         </CardContent>
       </Card>
 
